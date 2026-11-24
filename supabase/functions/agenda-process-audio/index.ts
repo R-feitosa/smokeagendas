@@ -1,9 +1,11 @@
 // POST multipart/form-data: audio (arquivo), tz (IANA, opcional)
+// Exige usuário logado E habilitado em agenda.perfis (ver _shared/auth.ts).
 // Devolve o rascunho do compromisso + a transcrição. NÃO grava nada: o app mostra
 // o rascunho, a pessoa confere e só então salva.
 //
 // O "agora" é o relógio do servidor (não o do aparelho, que pode estar errado);
 // o fuso vem do aparelho porque é ele que define o que "amanhã às 9" significa.
+import { exigirUsuarioDaAgenda } from '../_shared/auth.ts'
 import { corsHeaders, json } from '../_shared/cors.ts'
 import { descreverAgora, fusoOuPadrao } from '../_shared/datas.ts'
 import { transcrever } from './transcrever.ts'
@@ -23,6 +25,10 @@ Deno.serve(async (req) => {
   const cors = corsHeaders(req)
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return json({ erro: 'Método não permitido' }, 405, cors)
+
+  // antes de ler o áudio ou gastar OpenAI: só usuário logado e habilitado na agenda
+  const acesso = await exigirUsuarioDaAgenda(req)
+  if (!acesso.ok) return json({ erro: acesso.erro }, acesso.status, cors)
 
   try {
     const form = await req.formData()

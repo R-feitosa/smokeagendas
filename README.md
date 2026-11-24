@@ -121,7 +121,7 @@ delete from agenda.perfis where id = (select id from auth.users where email = 'f
 | Recorrência | Ocorrências materializadas até 7 dias à frente; a ocorrência *k* = âncora + *k* × passo **no fuso da pessoa** (sem deriva: 31/01 mensal → 28/02 → 31/03; hora local mantida no horário de verão). Cancelar uma não encerra a série; `agenda.encerrar_serie(id)` encerra; trocar o passo inicia série nova e cancela as posteriores da antiga | `0003` |
 | Reenvio até confirmar | Pendente após o 1º aviso → novo aviso a cada `perfis.reenviar_a_cada_min` (padrão 5), até `perfis.max_reenvios` (padrão 3; 0 desliga). Concluir para; "Adiar" e remarcar zeram a contagem. Cada envio tem `tag` própria (toca de novo) e o service worker fecha os avisos anteriores do mesmo compromisso | `0003`, `_shared/notificacao.ts`, `src/sw.ts` |
 | Data errada da IA | "Agora" vem do relógio do servidor com dia da semana; a resposta é validada (ISO com offset, limites) antes de voltar ao app | `process-audio/validar.ts` |
-| Acesso | Só usuários habilitados em `agenda.perfis` (FK); RLS por `user_id`; `anon` sem acesso ao schema; funções do cron só para `service_role`; segredo do cron gerado e conferido no Vault; CORS por `AGENDA_ALLOWED_ORIGINS` | `0001`/`0002` |
+| Acesso | Só usuários habilitados em `agenda.perfis` (FK); a função de áudio confere o usuário no Auth + perfil antes de gastar OpenAI (o gateway sozinho aceita a chave anon); RLS por `user_id`; `anon` sem acesso ao schema; funções do cron só para `service_role`; segredo do cron gerado e conferido no Vault; CORS por `AGENDA_ALLOWED_ORIGINS` | `0001`/`0002` |
 
 ## Testes
 
