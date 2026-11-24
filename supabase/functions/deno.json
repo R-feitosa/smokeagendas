@@ -1,0 +1,7 @@
+{
+  "nodeModulesDir": "none",
+  "tasks": {
+    "test": "deno test --no-prompt",
+    "check": "deno check process-audio/index.ts send-reminders/index.ts"
+  }
+}

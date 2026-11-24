@@ -58,7 +58,7 @@ agenda-voz/
 2. **Supabase** — crie o projeto, preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` no `.env`, depois:
    ```bash
    supabase link --project-ref SEU_REF
-   supabase db push                      # roda 0001_init.sql
+   supabase db push                      # roda 0001_init.sql e 0002_cron.sql
    ```
 3. **Chaves VAPID** (identificam o servidor de push)
    ```bash
@@ -67,16 +67,43 @@ agenda-voz/
    Coloque a chave pública em `VITE_VAPID_PUBLIC_KEY` (.env) e as duas nos secrets:
    ```bash
    supabase secrets set OPENAI_API_KEY=... VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... \
-     VAPID_SUBJECT=mailto:ti@seuescritorio.com.br CRON_SECRET=$(openssl rand -hex 32)
+     VAPID_SUBJECT=mailto:ti@seuescritorio.com.br CRON_SECRET=$(openssl rand -hex 32) \
+     ALLOWED_ORIGINS=https://agenda.seudominio.com.br
    ```
 4. **Funções**
    ```bash
    supabase functions deploy process-audio
    supabase functions deploy send-reminders --no-verify-jwt
    ```
-5. **Agendador** — edite `supabase/migrations/0002_cron.sql` (troque `<PROJECT_REF>` e `<CRON_SECRET>`) e rode no SQL Editor.
+5. **Agendador** — o job já foi criado pelo `db push`. Falta só guardar no Vault, uma vez, a URL do
+   projeto e o mesmo `CRON_SECRET` (SQL Editor):
+   ```sql
+   select vault.create_secret('https://SEU_REF.supabase.co', 'project_url');
+   select vault.create_secret('O_MESMO_CRON_SECRET', 'cron_secret');
+   ```
 6. **Usuários** — crie em *Authentication → Users* (o login é e-mail e senha).
 7. **Rodar**: `npm run dev` · **Publicar**: `npm run build` e suba a pasta `dist/` (Netlify/Vercel).
+
+## Backend: decisões e garantias
+
+| Tema | Como está resolvido | Onde |
+|---|---|---|
+| Lembrete duplicado | `reivindicar_lembretes()` marca e devolve o lote na mesma instrução (`FOR UPDATE SKIP LOCKED`); execuções sobrepostas do cron não pegam o mesmo evento | `0001_init.sql` |
+| Falha de envio | Se nenhum aparelho recebeu por erro transitório, `liberar_lembrete()` devolve à fila e tenta no minuto seguinte (até 2h após o início) | `send-reminders` |
+| Remarcação | Mudar `inicio` ou `lembrar_min_antes` rearma o lembrete (trigger) | `0001_init.sql` |
+| Fuso | Texto "Hoje/Amanhã/Sexta, 28/11 às 09:00" no fuso do perfil (`profiles.fuso`, padrão `America/Fortaleza`) | `_shared/datas.ts` |
+| Data errada da IA | "Agora" vem do relógio do servidor com dia da semana; a resposta é validada (ISO com offset, limites) antes de voltar ao app | `process-audio/validar.ts` |
+| Acesso | RLS por `user_id`; funções do cron só para `service_role`; segredo do cron comparado em tempo constante; CORS restrito por `ALLOWED_ORIGINS` | — |
+
+## Testes
+
+```bash
+npm run test:fn    # Deno: datas/fuso e validação do rascunho
+npm run test:db    # Postgres local: RLS, constraints, reivindicação de lembretes
+```
+
+`test:db` precisa de um Postgres acessível (`PGHOST`, `PGPORT`, `PGUSER`); ele cria e apaga um banco
+temporário e usa `tests/db/_shim_supabase.sql` para imitar `auth.users`/`auth.uid()` e os papéis do Supabase.
 
 ## Pontos de atenção
 
@@ -92,4 +119,5 @@ agenda-voz/
 - [ ] Resumo matinal por push
 - [ ] Exportar `.ics` / sincronizar com Google Agenda
 - [ ] Reenvio de lembrete até confirmação
-- [ ] Testes automatizados
+- [x] Testes automatizados do backend (funções puras + banco)
+- [ ] Testes do front

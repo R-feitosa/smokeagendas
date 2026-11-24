@@ -24,14 +24,15 @@ const schema = {
   },
 }
 
-export async function extrair(texto: string, agoraISO: string, tz: string): Promise<Rascunho> {
+/** Devolve o JSON do modelo SEM validar — quem chama passa por validarRascunho(). */
+export async function extrair(texto: string, agora: string, tz: string): Promise<unknown> {
   const key = Deno.env.get('OPENAI_API_KEY')
   if (!key) throw new Error('OPENAI_API_KEY não configurada')
 
   const sistema = [
     'Você transforma a fala de uma pessoa em UM compromisso de agenda, em português do Brasil.',
-    `Agora são ${agoraISO} (fuso ${tz}). Resolva "hoje", "amanhã", "sexta que vem", "daqui a 2 horas" a partir disso.`,
-    'Responda "inicio" sempre em ISO 8601 com o offset do fuso informado.',
+    `Agora é ${agora}, no fuso ${tz}. Resolva "hoje", "amanhã", "sexta que vem", "daqui a 2 horas" a partir disso.`,
+    'Responda "inicio" (e "fim", se houver) sempre em ISO 8601 com o offset do fuso informado, ex.: 2026-11-27T15:00:00-03:00.',
     'Se a pessoa não disser hora, use 09:00. Se não disser antecedência do aviso, use 30 minutos.',
     'Não invente informações que não foram ditas; deixe descricao null se não houver detalhe.',
   ].join('\n')
@@ -55,5 +56,11 @@ export async function extrair(texto: string, agoraISO: string, tz: string): Prom
   if (!res.ok) throw new Error(`Extração falhou (${res.status}): ${await res.text()}`)
 
   const data = await res.json()
-  return JSON.parse(data.choices[0].message.content) as Rascunho
+  const conteudo = data?.choices?.[0]?.message?.content
+  if (typeof conteudo !== 'string') return null // recusa/resposta vazia -> validarRascunho trata
+  try {
+    return JSON.parse(conteudo)
+  } catch {
+    return null
+  }
 }

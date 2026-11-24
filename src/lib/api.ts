@@ -5,7 +5,7 @@ import type { Evento, Rascunho } from './types'
 export async function processarAudio(blob: Blob): Promise<Rascunho> {
   const form = new FormData()
   form.append('audio', blob, blob.type.includes('mp4') ? 'audio.m4a' : 'audio.webm')
-  form.append('agora', new Date().toISOString())
+  // o servidor usa o próprio relógio; só o fuso vem do aparelho
   form.append('tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
 
   const { data, error } = await supabase.functions.invoke('process-audio', { body: form })
