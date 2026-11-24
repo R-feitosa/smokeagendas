@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { EventCard } from '../components/EventCard'
 import { useAcaoNotificacao } from '../hooks/useAcaoNotificacao'
 import { concluirEvento, excluirEvento, listarEventos } from '../lib/api'
-import { inicioDoDia, somarDias } from '../lib/datas'
+import { dataPorExtenso, inicioDoDia, somarDias } from '../lib/datas'
 import type { Evento } from '../lib/types'
 
 export function Hoje() {
@@ -31,7 +31,7 @@ export function Hoje() {
   return (
     <section>
       <h2>Hoje</h2>
-      <p className="sub">{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}</p>
+      <p className="sub">{dataPorExtenso(new Date())}</p>
 
       {carregando && <p>Carregando…</p>}
       {erro && <p className="erro">{erro}</p>}

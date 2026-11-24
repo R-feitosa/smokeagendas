@@ -1,5 +1,5 @@
 import type { Evento } from '../lib/types'
-import { hora } from '../lib/datas'
+import { hora, rotuloAntecedencia } from '../lib/datas'
 
 type Props = {
   evento: Evento
@@ -16,7 +16,7 @@ export function EventCard({ evento, onConcluir, onExcluir }: Props) {
         <strong>{evento.titulo}</strong>
         {evento.descricao && <p>{evento.descricao}</p>}
         <small>
-          🔔 {evento.lembrar_min_antes} min antes
+          🔔 {evento.lembrar_min_antes > 0 ? `${rotuloAntecedencia(evento.lembrar_min_antes)} antes` : rotuloAntecedencia(0)}
           {evento.recorrencia ? ` · repete (${evento.recorrencia})` : ''}
         </small>
       </div>

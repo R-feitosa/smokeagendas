@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import type { Rascunho, Recorrencia } from '../lib/types'
-import { deInput, paraInput } from '../lib/datas'
+import { deInput, paraInput, rotuloAntecedencia } from '../lib/datas'
+
+const ANTECEDENCIAS = [0, 5, 10, 15, 30, 60, 120, 1440]
+
+/** Se a IA devolver um valor fora da lista (ex.: 45 min), ele entra nas opções; senão o select mostraria outro valor e salvaria este. */
+function opcoesAntecedencia(atual: number) {
+  return ANTECEDENCIAS.includes(atual) ? ANTECEDENCIAS : [...ANTECEDENCIAS, atual].sort((a, b) => a - b)
+}
 
 type Props = {
   rascunho: Rascunho
@@ -47,9 +54,9 @@ export function ConfirmEvento({ rascunho, salvando, onSalvar, onDescartar }: Pro
       <label>
         Avisar antes
         <select value={antes} onChange={(e) => setAntes(Number(e.target.value))}>
-          {[0, 5, 10, 15, 30, 60, 120, 1440].map((m) => (
+          {opcoesAntecedencia(antes).map((m) => (
             <option key={m} value={m}>
-              {m === 0 ? 'Na hora' : m < 60 ? `${m} minutos` : m === 1440 ? '1 dia' : `${m / 60} h`}
+              {rotuloAntecedencia(m)}
             </option>
           ))}
         </select>

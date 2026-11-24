@@ -57,7 +57,7 @@ export function Gravar() {
   return (
     <section>
       <h2>Gravar compromisso</h2>
-      <p className="sub sub--normal">Diga o quê, quando e com quanta antecedência quer ser avisado.</p>
+      <p className="sub">Diga o quê, quando e com quanta antecedência quer ser avisado.</p>
 
       {erro && (
         <div className="erro-box" role="alert">
