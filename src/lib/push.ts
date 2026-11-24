@@ -30,10 +30,18 @@ export async function statusPush(): Promise<'ativo' | 'inativo' | 'negado' | 'in
   return (await reg.pushManager.getSubscription()) ? 'ativo' : 'inativo'
 }
 
+// Chave PÚBLICA do servidor de push (par da AGENDA_VAPID_PRIVATE_KEY das funções). Pública por natureza.
+const VAPID_PADRAO = 'BEIyI_5-wnIhKuPM7qtIr4MLacvV90GacPe8kxJJNaN2y9N6Q-VzwLW7-EclqkCJqWjkx4VsOVcfstsYBEYal5Q'
+
+/** Chave da variável se for válida (base64url, sem espaços); senão a padrão do rf-ops. */
+function chaveVapid(): string {
+  const env = (import.meta.env.VITE_VAPID_PUBLIC_KEY ?? '').trim().replace(/^["']|["']$/g, '')
+  return /^[\w-]{80,}$/.test(env) ? env : VAPID_PADRAO
+}
+
 /** Precisa ser chamada a partir de um toque do usuário (exigência do iOS). */
 export async function ativarPush(): Promise<void> {
-  const chave = (import.meta.env.VITE_VAPID_PUBLIC_KEY ?? '').trim().replace(/^["']|["']$/g, '')
-  if (!chave) throw new Error('VITE_VAPID_PUBLIC_KEY não configurada')
+  const chave = chaveVapid()
 
   const permissao = await Notification.requestPermission()
   if (permissao !== 'granted') throw new Error('Permissão de notificação negada')
