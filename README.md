@@ -124,6 +124,20 @@ delete from agenda.perfis where id = (select id from auth.users where email = 'f
 | Data errada da IA | "Agora" vem do relógio do servidor com dia da semana; a resposta é validada (ISO com offset, limites) antes de voltar ao app | `process-audio/validar.ts` |
 | Acesso | Só usuários habilitados em `agenda.perfis` (FK); a função de áudio confere o usuário no Auth + perfil antes de gastar OpenAI (o gateway sozinho aceita a chave anon); RLS por `user_id`; `anon` sem acesso ao schema; funções do cron só para `service_role`; segredo do cron gerado e conferido no Vault; CORS por `AGENDA_ALLOWED_ORIGINS` | `0001`/`0002` |
 
+## Diagnóstico em produção
+
+Confere chave de IA, modelos disponíveis e push, sem expor nenhum segredo (rode no SQL Editor):
+
+```sql
+select net.http_post(
+  url     := (select decrypted_secret from vault.decrypted_secrets where name = 'agenda_project_url') || '/functions/v1/agenda-send-reminders',
+  headers := jsonb_build_object('Content-Type', 'application/json',
+             'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'agenda_cron_secret')),
+  body    := '{"diagnostico": true}'::jsonb) as request_id;
+-- alguns segundos depois:
+select status_code, content::jsonb from net._http_response where id = <request_id>;
+```
+
 ## Testes
 
 ```bash

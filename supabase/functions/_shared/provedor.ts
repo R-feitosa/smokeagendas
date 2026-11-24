@@ -25,7 +25,8 @@ const PADROES = {
   groq: {
     baseUrl: 'https://api.groq.com/openai/v1',
     transcricao: ['whisper-large-v3-turbo', 'whisper-large-v3'],
-    extracao: ['llama-3.3-70b-versatile', 'openai/gpt-oss-120b', 'llama-3.1-8b-instant'],
+    // conferido via diagnóstico em 24/11/2026 (GET /models da conta): os Llama saíram do catálogo
+    extracao: ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b'],
     formato: 'json_object' as const,
   },
   openai: {
@@ -90,4 +91,33 @@ export async function comFallbackDeModelo(
     ultimo = `${res.status} ${corpo.slice(0, 300)}`
   }
   throw new Error(`${etapa}: nenhum modelo disponível (${modelos.join(', ')}). Último erro: ${ultimo}`)
+}
+
+export type Diagnostico = {
+  provedor: Provedor['nome']
+  chave_valida: boolean
+  status_http: number
+  transcricao: { modelo: string; disponivel: boolean }[]
+  extracao: { modelo: string; disponivel: boolean }[]
+  modelos_do_provedor?: string[]
+  erro?: string
+}
+
+/** Confere a chave e quais modelos configurados existem — GET /models, sem custo, sem expor a chave. */
+export async function diagnosticarIA(ia: Provedor, buscar: typeof fetch = fetch): Promise<Diagnostico> {
+  const res = await buscar(`${ia.baseUrl}/models`, { headers: { Authorization: `Bearer ${ia.chave}` } })
+  if (!res.ok) {
+    const corpo = await res.text()
+    return {
+      provedor: ia.nome, chave_valida: false, status_http: res.status,
+      transcricao: [], extracao: [], erro: corpo.slice(0, 300),
+    }
+  }
+  const ids: string[] = ((await res.json())?.data ?? []).map((m: { id: string }) => m.id)
+  const marcar = (lista: string[]) => lista.map((modelo) => ({ modelo, disponivel: ids.includes(modelo) }))
+  return {
+    provedor: ia.nome, chave_valida: true, status_http: res.status,
+    transcricao: marcar(ia.modelosTranscricao), extracao: marcar(ia.modelosExtracao),
+    modelos_do_provedor: ids.sort(),
+  }
 }

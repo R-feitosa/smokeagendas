@@ -1,7 +1,7 @@
 // Passo 1: áudio -> texto (Whisper, na Groq ou na OpenAI — ver provedor.ts).
 // Whisper aceita webm (Chrome/Android) e mp4/m4a (Safari/iOS).
 // Para trocar de provedor, mantenha a assinatura: (File) => Promise<string>.
-import { comFallbackDeModelo, type Provedor } from './provedor.ts'
+import { comFallbackDeModelo, type Provedor } from '../_shared/provedor.ts'
 
 export async function transcrever(audio: File, ia: Provedor): Promise<string> {
   const res = await comFallbackDeModelo(

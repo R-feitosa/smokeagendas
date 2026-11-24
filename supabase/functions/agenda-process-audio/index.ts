@@ -11,7 +11,7 @@ import { descreverAgora, fusoOuPadrao } from '../_shared/datas.ts'
 import { transcrever } from './transcrever.ts'
 import { extrair } from './extrair.ts'
 import { RascunhoInvalido, validarRascunho } from './validar.ts'
-import { escolherProvedor } from './provedor.ts'
+import { escolherProvedor } from '../_shared/provedor.ts'
 
 const MAX_BYTES = 10 * 1024 * 1024 // 10 MB (~ vários minutos de áudio)
 const MIN_BYTES = 1024 // menos que isso é toque acidental no botão

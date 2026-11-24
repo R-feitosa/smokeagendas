@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { comFallbackDeModelo, erroDeModelo, escolherProvedor } from './provedor.ts'
-import { montarSistema } from './extrair.ts'
+import { montarSistema } from '../agenda-process-audio/extrair.ts'
 
 const env = (vars: Record<string, string>) => (n: string) => vars[n]
 
@@ -68,4 +68,30 @@ Deno.test('prompt no modo JSON simples descreve as chaves e cita JSON', () => {
   assert.match(s, /JSON/)
   for (const k of ['titulo', 'descricao', 'inicio', 'fim', 'lembrar_min_antes', 'recorrencia']) assert.match(s, new RegExp(k))
   assert.doesNotMatch(montarSistema('x', 'y', 'json_schema'), /SOMENTE com um objeto JSON/)
+})
+
+import { diagnosticarIA } from './provedor.ts'
+
+Deno.test('diagnóstico: chave válida e marca quais modelos existem', async () => {
+  const ia = escolherProvedor(env({ AGENDA_GROQ_API_KEY: 'gsk_x' }))
+  const falso = ((url: string, init?: RequestInit) => {
+    assert.equal(url, 'https://api.groq.com/openai/v1/models')
+    assert.equal((init?.headers as Record<string, string>).Authorization, 'Bearer gsk_x')
+    return Promise.resolve(new Response(JSON.stringify({ data: [{ id: 'whisper-large-v3' }, { id: 'llama-3.3-70b-versatile' }] })))
+  }) as typeof fetch
+  const d = await diagnosticarIA(ia, falso)
+  assert.equal(d.chave_valida, true)
+  assert.deepEqual(d.transcricao, [
+    { modelo: 'whisper-large-v3-turbo', disponivel: false },
+    { modelo: 'whisper-large-v3', disponivel: true },
+  ])
+  assert.equal(d.extracao[0].disponivel, false) // 1º padrão (gpt-oss-120b) não está na lista falsa
+  assert.equal(JSON.stringify(d).includes('gsk_x'), false) // nunca devolve a chave
+})
+
+Deno.test('diagnóstico: chave inválida', async () => {
+  const ia = escolherProvedor(env({ AGENDA_GROQ_API_KEY: 'gsk_ruim' }))
+  const d = await diagnosticarIA(ia, (() => Promise.resolve(new Response('invalid api key', { status: 401 }))) as typeof fetch)
+  assert.equal(d.chave_valida, false)
+  assert.equal(d.status_http, 401)
 })

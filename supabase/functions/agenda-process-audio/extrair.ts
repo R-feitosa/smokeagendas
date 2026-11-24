@@ -1,6 +1,6 @@
 // Passo 2: texto -> compromisso estruturado (JSON), na Groq ou na OpenAI (ver provedor.ts).
 // O resultado SEMPRE passa por validarRascunho() — nenhum modelo é confiável sozinho.
-import { comFallbackDeModelo, type Provedor } from './provedor.ts'
+import { comFallbackDeModelo, type Provedor } from '../_shared/provedor.ts'
 
 export type Rascunho = {
   titulo: string

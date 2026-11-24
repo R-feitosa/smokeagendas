@@ -13,6 +13,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import webpush from 'npm:web-push@3'
 import { json } from '../_shared/cors.ts'
 import { montarNotificacao, type LembreteParaPush } from '../_shared/notificacao.ts'
+import { diagnosticarIA, escolherProvedor } from '../_shared/provedor.ts'
 
 type Lembrete = LembreteParaPush & { user_id: string }
 type Inscricao = { id: string; user_id: string; endpoint: string; p256dh: string; auth: string }
@@ -45,6 +46,18 @@ async function segredoConfere(recebido: string | null): Promise<boolean> {
 Deno.serve(async (req) => {
   if (!(await segredoConfere(req.headers.get('x-cron-secret')))) {
     return json({ erro: 'não autorizado' }, 401)
+  }
+
+  // Diagnóstico (só com o segredo do cron): confere chave de IA e modelos, sem expor valores.
+  //   corpo: {"diagnostico": true}
+  const corpo = await req.json().catch(() => ({}))
+  if (corpo?.diagnostico === true) {
+    try {
+      const ia = escolherProvedor((nome) => Deno.env.get(nome))
+      return json({ ia: await diagnosticarIA(ia), push_configurado: configurarVapid() })
+    } catch (e) {
+      return json({ ia: { erro: (e as Error).message }, push_configurado: configurarVapid() })
+    }
   }
   if (!configurarVapid()) {
     console.error('AGENDA_VAPID_PUBLIC_KEY / AGENDA_VAPID_PRIVATE_KEY não configuradas')
