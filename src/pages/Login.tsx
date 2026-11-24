@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { servidor, supabase } from '../lib/supabase'
 
 export function Login() {
   const [email, setEmail] = useState('')
@@ -17,7 +17,7 @@ export function Login() {
     // só credencial errada vira "senha inválida"; falha de rede ou de servidor precisa aparecer como tal
     if (error.status === 400 && /invalid login credentials/i.test(error.message)) setErro('E-mail ou senha inválidos')
     else if (/email not confirmed/i.test(error.message)) setErro('Este e-mail ainda não foi confirmado.')
-    else if (!error.status) setErro('Sem conexão com o servidor. Verifique a internet e tente de novo.')
+    else if (!error.status) setErro(`Sem conexão com o servidor (${servidor}). Verifique a internet e tente de novo.`)
     else setErro(`Não foi possível entrar (${error.status}): ${error.message}`)
   }
 

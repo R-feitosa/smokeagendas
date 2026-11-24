@@ -6,7 +6,7 @@ import { Gravar } from './pages/Gravar'
 import { Hoje } from './pages/Hoje'
 import { Login } from './pages/Login'
 import { Semana } from './pages/Semana'
-import { configurado } from './lib/supabase'
+import { configurado, servidor } from './lib/supabase'
 
 export default function App() {
   const { session, carregando } = useSession()
@@ -16,8 +16,11 @@ export default function App() {
       <div className="login">
         <h1>Agenda por Voz</h1>
         <p className="aviso">
-          Este endereço foi publicado sem a configuração do servidor (faltam <code>VITE_SUPABASE_URL</code> e{' '}
+          Este endereço foi publicado sem a configuração correta do servidor (confira <code>VITE_SUPABASE_URL</code> e{' '}
           <code>VITE_SUPABASE_ANON_KEY</code>). Cadastre as variáveis na Vercel e faça um novo deploy.
+        </p>
+        <p className="sub">
+          Endereço recebido: <code>{servidor.slice(0, 120)}</code>
         </p>
       </div>
     )

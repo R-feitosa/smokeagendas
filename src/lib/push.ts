@@ -32,7 +32,7 @@ export async function statusPush(): Promise<'ativo' | 'inativo' | 'negado' | 'in
 
 /** Precisa ser chamada a partir de um toque do usuário (exigência do iOS). */
 export async function ativarPush(): Promise<void> {
-  const chave = import.meta.env.VITE_VAPID_PUBLIC_KEY
+  const chave = (import.meta.env.VITE_VAPID_PUBLIC_KEY ?? '').trim().replace(/^["']|["']$/g, '')
   if (!chave) throw new Error('VITE_VAPID_PUBLIC_KEY não configurada')
 
   const permissao = await Notification.requestPermission()
