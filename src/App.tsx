@@ -6,9 +6,21 @@ import { Gravar } from './pages/Gravar'
 import { Hoje } from './pages/Hoje'
 import { Login } from './pages/Login'
 import { Semana } from './pages/Semana'
+import { configurado } from './lib/supabase'
 
 export default function App() {
   const { session, carregando } = useSession()
+
+  if (!configurado)
+    return (
+      <div className="login">
+        <h1>Agenda por Voz</h1>
+        <p className="aviso">
+          Este endereço foi publicado sem a configuração do servidor (faltam <code>VITE_SUPABASE_URL</code> e{' '}
+          <code>VITE_SUPABASE_ANON_KEY</code>). Cadastre as variáveis na Vercel e faça um novo deploy.
+        </p>
+      </div>
+    )
 
   if (carregando) return <p className="splash">Carregando…</p>
   if (!session) return <Login />

@@ -13,7 +13,12 @@ export function Login() {
     setCarregando(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
     setCarregando(false)
-    if (error) setErro('E-mail ou senha inválidos')
+    if (!error) return
+    // só credencial errada vira "senha inválida"; falha de rede ou de servidor precisa aparecer como tal
+    if (error.status === 400 && /invalid login credentials/i.test(error.message)) setErro('E-mail ou senha inválidos')
+    else if (/email not confirmed/i.test(error.message)) setErro('Este e-mail ainda não foi confirmado.')
+    else if (!error.status) setErro('Sem conexão com o servidor. Verifique a internet e tente de novo.')
+    else setErro(`Não foi possível entrar (${error.status}): ${error.message}`)
   }
 
   return (
