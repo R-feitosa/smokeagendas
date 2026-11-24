@@ -12,24 +12,44 @@ precacheAndRoute(self.__WB_MANIFEST)
 self.addEventListener('install', () => self.skipWaiting())
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()))
 
-type PushPayload = { title?: string; body?: string; tag?: string; eventId?: string; url?: string }
+type PushPayload = {
+  title?: string
+  body?: string
+  tag?: string
+  eventId?: string
+  envio?: number
+  url?: string
+}
+
+/** Fecha os avisos já exibidos deste compromisso (reenvios não se acumulam). */
+async function fecharAvisosDoEvento(eventId?: string): Promise<void> {
+  if (!eventId) return
+  try {
+    const abertas = await self.registration.getNotifications()
+    for (const n of abertas) if ((n.data as { eventId?: string })?.eventId === eventId) n.close()
+  } catch {
+    // getNotifications indisponível: segue sem fechar
+  }
+}
 
 self.addEventListener('push', (event) => {
   const data: PushPayload = event.data?.json() ?? {}
   event.waitUntil(
-    self.registration.showNotification(data.title ?? 'Lembrete', {
-      body: data.body,
-      tag: data.tag,
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
-      requireInteraction: true,
-      data: { url: data.url ?? '/', eventId: data.eventId },
-      // @ts-expect-error `actions` existe em runtime, mas falta na tipagem do lib "WebWorker"
-      actions: [
-        { action: 'concluir', title: 'Concluir' },
-        { action: 'adiar', title: 'Adiar 10 min' },
-      ],
-    }),
+    fecharAvisosDoEvento(data.eventId).then(() =>
+      self.registration.showNotification(data.title ?? 'Lembrete', {
+        body: data.body,
+        tag: data.tag,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        requireInteraction: true,
+        data: { url: data.url ?? '/', eventId: data.eventId },
+        // @ts-expect-error `actions` existe em runtime, mas falta na tipagem do lib "WebWorker"
+        actions: [
+          { action: 'concluir', title: 'Concluir' },
+          { action: 'adiar', title: 'Adiar 10 min' },
+        ],
+      }),
+    ),
   )
 })
 
@@ -42,6 +62,7 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     (async () => {
+      await fecharAvisosDoEvento(eventId)
       const abertas = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
       for (const c of abertas) {
         if ('focus' in c) {

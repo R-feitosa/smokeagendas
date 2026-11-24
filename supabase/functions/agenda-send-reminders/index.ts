@@ -4,22 +4,17 @@
 //
 // 1. reivindicar_lembretes() marca e devolve, de forma atômica, os lembretes vencidos
 //    (duas execuções sobrepostas nunca pegam o mesmo lembrete).
+//    Inclui os REENVIOS: compromisso ainda pendente recebe novo aviso a cada
+//    perfis.reenviar_a_cada_min, até perfis.max_reenvios vezes ("envio" = 1, 2, ...).
 // 2. Envia Web Push para todos os aparelhos da pessoa.
 // 3. Se NENHUM aparelho recebeu por erro transitório (rede, 5xx, 429), devolve o
 //    lembrete para a fila com liberar_lembrete() — ele é tentado no minuto seguinte.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import webpush from 'npm:web-push@3'
 import { json } from '../_shared/cors.ts'
-import { textoQuando } from '../_shared/datas.ts'
+import { montarNotificacao, type LembreteParaPush } from '../_shared/notificacao.ts'
 
-type Lembrete = {
-  id: string
-  user_id: string
-  titulo: string
-  descricao: string | null
-  inicio: string
-  fuso: string
-}
+type Lembrete = LembreteParaPush & { user_id: string }
 type Inscricao = { id: string; user_id: string; endpoint: string; p256dh: string; auth: string }
 
 // tudo da agenda fica no schema `agenda` (isolado do projeto hospedeiro)
@@ -83,18 +78,12 @@ Deno.serve(async (req) => {
   const agora = new Date()
   let enviados = 0
   let devolvidos = 0
+  const reenvios = lembretes.filter((l) => l.envio > 1).length
   const expiradas: string[] = []
 
   for (const l of lembretes) {
     const subs = porUsuario.get(l.user_id) ?? []
-    const quando = textoQuando(new Date(l.inicio), l.fuso, agora)
-    const payload = JSON.stringify({
-      title: l.titulo,
-      body: `${quando}${l.descricao ? ` — ${l.descricao}` : ''}`,
-      tag: l.id,
-      eventId: l.id,
-      url: '/',
-    })
+    const payload = JSON.stringify(montarNotificacao(l, agora))
 
     const resultados = await Promise.allSettled(
       subs.map((s) =>
@@ -130,5 +119,5 @@ Deno.serve(async (req) => {
     await supabase.from('push_subscriptions').delete().in('id', expiradas)
   }
 
-  return json({ eventos: lembretes.length, enviados, devolvidos, inscricoes_removidas: expiradas.length })
+  return json({ eventos: lembretes.length, reenvios, enviados, devolvidos, inscricoes_removidas: expiradas.length })
 })

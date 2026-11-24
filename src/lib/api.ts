@@ -60,3 +60,14 @@ export async function adiarLembrete(id: string, min = 10): Promise<void> {
     .eq('id', id)
   if (error) throw error
 }
+
+/**
+ * Encerra a série recorrente DEPOIS desta ocorrência: cancela as futuras
+ * pendentes e para de gerar novas. Devolve quantas foram canceladas.
+ * (Excluir uma ocorrência isolada não encerra a série — use excluirEvento.)
+ */
+export async function encerrarSerie(eventoId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('encerrar_serie', { p_evento_id: eventoId })
+  if (error) throw error
+  return data as number
+}

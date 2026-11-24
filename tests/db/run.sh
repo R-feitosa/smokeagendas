@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
-# Cria um banco descartável, aplica o shim + migrations e roda os testes.
+# Para cada *_test.sql: cria um banco descartável, aplica o shim + migrations e roda.
 # Uso: PGHOST=... PGPORT=... PGUSER=postgres npm run test:db
 set -euo pipefail
 cd "$(dirname "$0")/../.."
-DB="agenda_test_$$"
-createdb "$DB"
-trap 'dropdb --if-exists "$DB"' EXIT
-psql -q -v ON_ERROR_STOP=1 -d "$DB" -f tests/db/_shim_supabase.sql
-# 0002 depende de pg_cron/pg_net/vault (só existem no Supabase): testamos apenas o schema
-psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/migrations/0001_init.sql
-psql -q -v ON_ERROR_STOP=1 -d "$DB" -f tests/db/eventos_test.sql
+falhas=0
+for teste in tests/db/*_test.sql; do
+  DB="agenda_test_$$_$(basename "$teste" .sql)"
+  createdb "$DB"
+  echo "== $teste"
+  if psql -q -v ON_ERROR_STOP=1 -d "$DB" -f tests/db/_shim_supabase.sql \
+     && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/migrations/0001_init.sql \
+     && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f tests/db/_shim_0002.sql \
+     && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/migrations/0003_recorrencia_reenvio.sql \
+     && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f "$teste"; then :; else falhas=$((falhas + 1)); fi
+  dropdb --if-exists "$DB"
+done
+[ "$falhas" -eq 0 ] || { echo "$falhas arquivo(s) de teste falharam"; exit 1; }
