@@ -21,21 +21,21 @@ Celular (PWA)                         Supabase
 agenda-voz/
 ├── public/icons/                 ícones do PWA (192, 512, maskable)
 ├── src/
-│   ├── main.tsx · App.tsx        entrada e rotas (Hoje, Semana, Novo, Ajustes)
+│   ├── main.tsx · App.tsx        entrada e rotas (Hoje, Semana, Gravar, Ajustes)
 │   ├── sw.ts                     service worker: cache + push + botões da notificação
 │   ├── styles.css
 │   ├── components/
 │   │   ├── Layout.tsx            barra de abas inferior
-│   │   ├── Recorder.tsx          botão de gravar (toque para iniciar/parar)
+│   │   ├── Recorder.tsx          botão de gravar: medidor de volume, cronômetro, limite de 2 min, cancelar
 │   │   ├── ConfirmEvento.tsx     conferência do rascunho antes de salvar
 │   │   └── EventCard.tsx
-│   ├── pages/                    Login · Hoje · Semana · Novo · Ajustes
+│   ├── pages/                    Login · Hoje · Semana · Gravar · Ajustes
 │   ├── hooks/
 │   │   ├── useSession.ts
 │   │   └── useAcaoNotificacao.ts "Concluir" / "Adiar" vindos da notificação
 │   └── lib/
 │       ├── supabase.ts · api.ts · types.ts · datas.ts
-│       ├── recorder.ts           MediaRecorder (webm no Chrome, mp4 no Safari)
+│       ├── recorder.ts           MediaRecorder (webm no Chrome, mp4 no Safari) + erros de microfone traduzidos
 │       └── push.ts               inscrição Web Push
 └── supabase/
     ├── config.toml

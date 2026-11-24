@@ -35,7 +35,7 @@ export function Hoje() {
 
       {carregando && <p>Carregando…</p>}
       {erro && <p className="erro">{erro}</p>}
-      {!carregando && !erro && eventos.length === 0 && <p className="vazio">Nada marcado para hoje. Toque em 🎙 Novo.</p>}
+      {!carregando && !erro && eventos.length === 0 && <p className="vazio">Nada marcado para hoje. Toque em 🎙 Gravar.</p>}
 
       <ul className="lista">
         {eventos.map((e) => (

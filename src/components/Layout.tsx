@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { IconeMic } from './Recorder'
 
 export function Layout() {
   return (
@@ -13,8 +14,11 @@ export function Layout() {
         <NavLink to="/semana">
           <span>🗓</span>Semana
         </NavLink>
-        <NavLink to="/novo" className="tabbar__novo">
-          <span>🎙</span>Novo
+        <NavLink to="/gravar" className="tabbar__gravar">
+          <span>
+            <IconeMic tamanho={22} />
+          </span>
+          Gravar
         </NavLink>
         <NavLink to="/ajustes">
           <span>⚙️</span>Ajustes

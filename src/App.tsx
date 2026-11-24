@@ -2,9 +2,9 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { useSession } from './hooks/useSession'
 import { Ajustes } from './pages/Ajustes'
+import { Gravar } from './pages/Gravar'
 import { Hoje } from './pages/Hoje'
 import { Login } from './pages/Login'
-import { Novo } from './pages/Novo'
 import { Semana } from './pages/Semana'
 
 export default function App() {
@@ -18,7 +18,8 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<Hoje />} />
         <Route path="semana" element={<Semana />} />
-        <Route path="novo" element={<Novo />} />
+        <Route path="gravar" element={<Gravar />} />
+        <Route path="novo" element={<Navigate to="/gravar" replace />} />
         <Route path="ajustes" element={<Ajustes />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
