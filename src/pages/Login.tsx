@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { servidor, supabase } from '../lib/supabase'
+import { mensagemErroLogin, supabase } from '../lib/supabase'
 
-export function Login() {
+export function Login({ erroInicial = null }: { erroInicial?: string | null }) {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-  const [erro, setErro] = useState<string | null>(null)
+  const [erro, setErro] = useState<string | null>(erroInicial)
   const [carregando, setCarregando] = useState(false)
 
   async function entrar(e: React.FormEvent) {
@@ -13,12 +13,7 @@ export function Login() {
     setCarregando(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
     setCarregando(false)
-    if (!error) return
-    // só credencial errada vira "senha inválida"; falha de rede ou de servidor precisa aparecer como tal
-    if (error.status === 400 && /invalid login credentials/i.test(error.message)) setErro('E-mail ou senha inválidos')
-    else if (/email not confirmed/i.test(error.message)) setErro('Este e-mail ainda não foi confirmado.')
-    else if (!error.status) setErro(`Sem conexão com o servidor (${servidor}). Verifique a internet e tente de novo.`)
-    else setErro(`Não foi possível entrar (${error.status}): ${error.message}`)
+    if (error) setErro(mensagemErroLogin(error))
   }
 
   return (

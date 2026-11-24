@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ativarPush, desativarPush, ehIOS, estaInstalado, statusPush } from '../lib/push'
-import { supabase } from '../lib/supabase'
+import { entradaAutomatica, supabase } from '../lib/supabase'
 
 type Status = Awaited<ReturnType<typeof statusPush>>
 
@@ -46,10 +46,14 @@ export function Ajustes() {
       {status === 'ativo' && <p className="ok">✓ Lembretes ativos neste aparelho</p>}
       {erro && <p className="erro">{erro}</p>}
 
-      <h3>Conta</h3>
-      <button className="btn btn--sec" onClick={() => supabase.auth.signOut()}>
-        Sair
-      </button>
+      {!entradaAutomatica && (
+        <>
+          <h3>Conta</h3>
+          <button className="btn btn--sec" onClick={() => supabase.auth.signOut()}>
+            Sair
+          </button>
+        </>
+      )}
     </section>
   )
 }

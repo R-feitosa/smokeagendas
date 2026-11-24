@@ -9,7 +9,7 @@ import { Semana } from './pages/Semana'
 import { configurado, servidor } from './lib/supabase'
 
 export default function App() {
-  const { session, carregando } = useSession()
+  const { session, carregando, erroEntrada } = useSession()
 
   if (!configurado)
     return (
@@ -26,7 +26,7 @@ export default function App() {
     )
 
   if (carregando) return <p className="splash">Carregando…</p>
-  if (!session) return <Login />
+  if (!session) return <Login erroInicial={erroEntrada} />
 
   return (
     <Routes>
