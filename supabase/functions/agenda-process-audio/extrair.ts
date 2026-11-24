@@ -1,5 +1,6 @@
-// Passo 2: texto -> compromisso estruturado (JSON).
-// Troque por Claude/Gemini se preferir: só precisa devolver o tipo Rascunho.
+// Passo 2: texto -> compromisso estruturado (JSON), na Groq ou na OpenAI (ver provedor.ts).
+// O resultado SEMPRE passa por validarRascunho() — nenhum modelo é confiável sozinho.
+import { comFallbackDeModelo, type Provedor } from './provedor.ts'
 
 export type Rascunho = {
   titulo: string
@@ -24,36 +25,52 @@ const schema = {
   },
 }
 
-/** Devolve o JSON do modelo SEM validar — quem chama passa por validarRascunho(). */
-export async function extrair(texto: string, agora: string, tz: string): Promise<unknown> {
-  const key = Deno.env.get('AGENDA_OPENAI_API_KEY')
-  if (!key) throw new Error('AGENDA_OPENAI_API_KEY não configurada')
+// No modo JSON simples (Groq) o formato vai descrito no próprio prompt
+const FORMATO_EM_TEXTO = [
+  'Responda SOMENTE com um objeto JSON, sem texto antes ou depois, exatamente com estas chaves:',
+  '{"titulo": string curto, "descricao": string ou null, "inicio": string ISO 8601 com offset,',
+  ' "fim": string ISO 8601 com offset ou null, "lembrar_min_antes": inteiro,',
+  ' "recorrencia": "diaria" | "semanal" | "mensal" | null}',
+].join('\n')
 
-  const sistema = [
+export function montarSistema(agora: string, tz: string, formato: Provedor['formato']): string {
+  return [
     'Você transforma a fala de uma pessoa em UM compromisso de agenda, em português do Brasil.',
     `Agora é ${agora}, no fuso ${tz}. Resolva "hoje", "amanhã", "sexta que vem", "daqui a 2 horas" a partir disso.`,
     'Responda "inicio" (e "fim", se houver) sempre em ISO 8601 com o offset do fuso informado, ex.: 2026-11-27T15:00:00-03:00.',
     'Se a pessoa não disser hora, use 09:00. Se não disser antecedência do aviso, use 30 minutos.',
+    'Use "recorrencia" só se a pessoa disser que repete (todo dia, toda semana, todo mês).',
     'Não invente informações que não foram ditas; deixe descricao null se não houver detalhe.',
+    ...(formato === 'json_object' ? [FORMATO_EM_TEXTO] : []),
   ].join('\n')
+}
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: Deno.env.get('AGENDA_OPENAI_EXTRACT_MODEL') ?? 'gpt-4o-mini',
-      temperature: 0,
-      messages: [
-        { role: 'system', content: sistema },
-        { role: 'user', content: texto },
-      ],
-      response_format: {
-        type: 'json_schema',
-        json_schema: { name: 'compromisso', strict: true, schema },
-      },
-    }),
-  })
-  if (!res.ok) throw new Error(`Extração falhou (${res.status}): ${await res.text()}`)
+/** Devolve o JSON do modelo SEM validar — quem chama passa por validarRascunho(). */
+export async function extrair(texto: string, agora: string, tz: string, ia: Provedor): Promise<unknown> {
+  const sistema = montarSistema(agora, tz, ia.formato)
+  const response_format =
+    ia.formato === 'json_schema'
+      ? { type: 'json_schema', json_schema: { name: 'compromisso', strict: true, schema } }
+      : { type: 'json_object' }
+
+  const res = await comFallbackDeModelo(
+    ia.modelosExtracao,
+    (modelo) =>
+      fetch(`${ia.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${ia.chave}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: modelo,
+          temperature: 0,
+          messages: [
+            { role: 'system', content: sistema },
+            { role: 'user', content: texto },
+          ],
+          response_format,
+        }),
+      }),
+    `Extração (${ia.nome})`,
+  )
 
   const data = await res.json()
   const conteudo = data?.choices?.[0]?.message?.content

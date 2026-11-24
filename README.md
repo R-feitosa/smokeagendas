@@ -60,7 +60,7 @@ compartilháveis têm prefixo próprio:
 | Edge Functions | `agenda-process-audio`, `agenda-send-reminders` |
 | Job do pg_cron | `agenda-enviar-lembretes` |
 | Vault | `agenda_cron_secret` (gerado no banco), `agenda_project_url` |
-| Secrets das funções | `AGENDA_OPENAI_API_KEY`, `AGENDA_VAPID_PUBLIC_KEY`, `AGENDA_VAPID_PRIVATE_KEY`, `AGENDA_VAPID_SUBJECT`, `AGENDA_ALLOWED_ORIGINS` |
+| Secrets das funções | `AGENDA_GROQ_API_KEY` (ou `AGENDA_OPENAI_API_KEY`), `AGENDA_VAPID_PUBLIC_KEY`, `AGENDA_VAPID_PRIVATE_KEY`, `AGENDA_VAPID_SUBJECT`, `AGENDA_ALLOWED_ORIGINS` |
 | Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio` |
 
 **Único ponto compartilhado: o login.** Os usuários ficam no Authentication do rf-ops,
@@ -96,7 +96,7 @@ delete from agenda.perfis where id = (select id from auth.users where email = 'f
    A pública vai em `VITE_VAPID_PUBLIC_KEY` (.env) e as duas nos secrets das funções:
    ```bash
    supabase secrets set --project-ref gxmoxejamprvltpozlrk \
-     AGENDA_OPENAI_API_KEY=... AGENDA_VAPID_PUBLIC_KEY=... AGENDA_VAPID_PRIVATE_KEY=... \
+     AGENDA_GROQ_API_KEY=... AGENDA_VAPID_PUBLIC_KEY=... AGENDA_VAPID_PRIVATE_KEY=... \
      AGENDA_VAPID_SUBJECT=mailto:ti@seuescritorio.com.br \
      AGENDA_ALLOWED_ORIGINS=https://agenda.seudominio.com.br
    ```
@@ -120,6 +120,7 @@ delete from agenda.perfis where id = (select id from auth.users where email = 'f
 | Fuso | Texto "Hoje/Amanhã/Sexta, 28/11 às 09:00" no fuso do perfil (`agenda.perfis.fuso`, padrão `America/Fortaleza`) | `_shared/datas.ts` |
 | Recorrência | Ocorrências materializadas até 7 dias à frente; a ocorrência *k* = âncora + *k* × passo **no fuso da pessoa** (sem deriva: 31/01 mensal → 28/02 → 31/03; hora local mantida no horário de verão). Cancelar uma não encerra a série; `agenda.encerrar_serie(id)` encerra; trocar o passo inicia série nova e cancela as posteriores da antiga | `0003` |
 | Reenvio até confirmar | Pendente após o 1º aviso → novo aviso a cada `perfis.reenviar_a_cada_min` (padrão 5), até `perfis.max_reenvios` (padrão 3; 0 desliga). Concluir para; "Adiar" e remarcar zeram a contagem. Cada envio tem `tag` própria (toca de novo) e o service worker fecha os avisos anteriores do mesmo compromisso | `0003`, `_shared/notificacao.ts`, `src/sw.ts` |
+| Provedor de IA | Groq (padrão, via `AGENDA_GROQ_API_KEY`) ou OpenAI; mesma API. Modelos em lista de preferência com troca automática se um for descontinuado; fixáveis por `AGENDA_IA_MODELO_*` | `agenda-process-audio/provedor.ts` |
 | Data errada da IA | "Agora" vem do relógio do servidor com dia da semana; a resposta é validada (ISO com offset, limites) antes de voltar ao app | `process-audio/validar.ts` |
 | Acesso | Só usuários habilitados em `agenda.perfis` (FK); a função de áudio confere o usuário no Auth + perfil antes de gastar OpenAI (o gateway sozinho aceita a chave anon); RLS por `user_id`; `anon` sem acesso ao schema; funções do cron só para `service_role`; segredo do cron gerado e conferido no Vault; CORS por `AGENDA_ALLOWED_ORIGINS` | `0001`/`0002` |
 
