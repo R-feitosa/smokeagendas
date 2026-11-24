@@ -1,0 +1,9 @@
+project_id = "agenda-voz"
+
+# O cron chama esta função com um segredo próprio (CRON_SECRET), não com JWT de usuário
+[functions.send-reminders]
+verify_jwt = false
+
+# Esta exige usuário logado (JWT) — é o padrão
+[functions.process-audio]
+verify_jwt = true
