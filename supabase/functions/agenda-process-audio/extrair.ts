@@ -26,8 +26,8 @@ const schema = {
 
 /** Devolve o JSON do modelo SEM validar — quem chama passa por validarRascunho(). */
 export async function extrair(texto: string, agora: string, tz: string): Promise<unknown> {
-  const key = Deno.env.get('OPENAI_API_KEY')
-  if (!key) throw new Error('OPENAI_API_KEY não configurada')
+  const key = Deno.env.get('AGENDA_OPENAI_API_KEY')
+  if (!key) throw new Error('AGENDA_OPENAI_API_KEY não configurada')
 
   const sistema = [
     'Você transforma a fala de uma pessoa em UM compromisso de agenda, em português do Brasil.',
@@ -41,7 +41,7 @@ export async function extrair(texto: string, agora: string, tz: string): Promise
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: Deno.env.get('OPENAI_EXTRACT_MODEL') ?? 'gpt-4o-mini',
+      model: Deno.env.get('AGENDA_OPENAI_EXTRACT_MODEL') ?? 'gpt-4o-mini',
       temperature: 0,
       messages: [
         { role: 'system', content: sistema },

@@ -2,6 +2,6 @@
   "nodeModulesDir": "none",
   "tasks": {
     "test": "deno test --no-prompt",
-    "check": "deno check process-audio/index.ts send-reminders/index.ts"
+    "check": "deno check agenda-process-audio/index.ts agenda-send-reminders/index.ts"
   }
 }

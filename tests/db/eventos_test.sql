@@ -3,21 +3,39 @@
 set client_min_messages = warning;
 
 create temp table _resultado (teste text, ok boolean);
-grant all on _resultado to authenticated, service_role;
+grant all on _resultado to anon, authenticated, service_role;
 
 insert into auth.users (id, email, raw_user_meta_data) values
-  ('00000000-0000-0000-0000-00000000000a', 'ana@ex.com',  '{"nome":"Ana"}'),
-  ('00000000-0000-0000-0000-00000000000b', 'bia@ex.com',  '{}');
+  ('00000000-0000-0000-0000-00000000000a', 'ana@ex.com',  '{}'),
+  ('00000000-0000-0000-0000-00000000000b', 'bia@ex.com',  '{}'),
+  ('00000000-0000-0000-0000-00000000000c', 'ops@ex.com',  '{}');  -- usuário do ops, sem agenda
+
+set search_path = agenda, public;
 
 insert into _resultado
-select 'perfil criado pelo trigger com nome/fuso padrão',
-       (select count(*) = 2 from profiles)
-   and (select nome = 'Ana' from profiles where id = '00000000-0000-0000-0000-00000000000a')
-   and (select nome = 'bia' and fuso = 'America/Fortaleza' from profiles where id = '00000000-0000-0000-0000-00000000000b');
+select 'nenhum perfil criado automaticamente (sem trigger em auth.users)', (select count(*) = 0 from perfis);
+
+set role service_role;
+select habilitar_usuario('ana@ex.com', 'Ana') \g /dev/null
+select habilitar_usuario('BIA@ex.com') \g /dev/null
+reset role;
+
+insert into _resultado
+select 'habilitar_usuario cria perfil com nome/fuso padrão',
+       (select count(*) = 2 from perfis)
+   and (select nome = 'Ana' from perfis where id = '00000000-0000-0000-0000-00000000000a')
+   and (select nome = 'BIA' and fuso = 'America/Fortaleza' from perfis where id = '00000000-0000-0000-0000-00000000000b');
+
+do $$ begin
+  perform agenda.habilitar_usuario('ninguem@ex.com');
+  insert into _resultado values ('habilitar e-mail inexistente falha', false);
+exception when raise_exception then
+  insert into _resultado values ('habilitar e-mail inexistente falha', true);
+end $$;
 
 -- fuso inválido é recusado
 do $$ begin
-  update profiles set fuso = 'Marte/Olimpo' where nome = 'Ana';
+  update agenda.perfis set fuso = 'Marte/Olimpo' where nome = 'Ana';
   insert into _resultado values ('fuso inválido recusado', false);
 exception when check_violation then
   insert into _resultado values ('fuso inválido recusado', true);
@@ -38,7 +56,7 @@ insert into eventos (titulo, inicio) values ('da Bia', now() + interval '1 minut
 insert into _resultado select 'RLS: Bia só vê o que é dela', (select count(*) = 1 from eventos);
 
 do $$ begin
-  insert into eventos (user_id, titulo, inicio)
+  insert into agenda.eventos (user_id, titulo, inicio)
   values ('00000000-0000-0000-0000-00000000000a', 'intruso', now());
   insert into _resultado values ('RLS: não grava em nome de outro', false);
 exception when insufficient_privilege then
@@ -46,24 +64,55 @@ exception when insufficient_privilege then
 end $$;
 
 do $$ begin
-  perform reivindicar_lembretes();
+  perform agenda.reivindicar_lembretes();
   insert into _resultado values ('authenticated não chama reivindicar_lembretes', false);
 exception when insufficient_privilege then
   insert into _resultado values ('authenticated não chama reivindicar_lembretes', true);
 end $$;
 
 do $$ begin
-  insert into eventos (titulo, inicio, fim) values ('fim antes', now(), now() - interval '1 hour');
+  insert into agenda.eventos (titulo, inicio, fim) values ('fim antes', now(), now() - interval '1 hour');
   insert into _resultado values ('fim < inicio recusado', false);
 exception when check_violation then
   insert into _resultado values ('fim < inicio recusado', true);
 end $$;
 
 do $$ begin
-  insert into eventos (titulo, inicio) values ('   ', now());
+  insert into agenda.eventos (titulo, inicio) values ('   ', now());
   insert into _resultado values ('título vazio recusado', false);
 exception when check_violation then
   insert into _resultado values ('título vazio recusado', true);
+end $$;
+-- usuário do ops, sem perfil na agenda: não lê perfis, não grava evento nem push
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000c', false) \g /dev/null
+insert into _resultado select 'usuário não habilitado não vê perfis', (select count(*) = 0 from agenda.perfis);
+do $$ begin
+  insert into agenda.eventos (titulo, inicio) values ('não deveria', now());
+  insert into _resultado values ('usuário não habilitado não cria evento', false);
+exception when foreign_key_violation then
+  insert into _resultado values ('usuário não habilitado não cria evento', true);
+end $$;
+do $$ begin
+  insert into agenda.push_subscriptions (endpoint, p256dh, auth) values ('https://x', 'k', 'a');
+  insert into _resultado values ('usuário não habilitado não cria push', false);
+exception when foreign_key_violation then
+  insert into _resultado values ('usuário não habilitado não cria push', true);
+end $$;
+do $$ begin
+  perform agenda.habilitar_usuario('ops@ex.com');
+  insert into _resultado values ('usuário logado não se auto-habilita', false);
+exception when insufficient_privilege then
+  insert into _resultado values ('usuário logado não se auto-habilita', true);
+end $$;
+reset role;
+
+-- anon não enxerga o schema
+set role anon;
+do $$ begin
+  perform 1 from agenda.eventos;
+  insert into _resultado values ('anon sem acesso ao schema', false);
+exception when insufficient_privilege then
+  insert into _resultado values ('anon sem acesso ao schema', true);
 end $$;
 reset role;
 
@@ -100,6 +149,17 @@ insert into _resultado select 'editar só o título não rearma',
 -- concorrência: lote limitado
 insert into _resultado select 'parâmetro lote limita o tamanho',
   (select count(*) = 0 from reivindicar_lembretes(0));
+
+-- excluir o perfil leva os dados da agenda junto, sem tocar em auth.users
+delete from perfis where id = '00000000-0000-0000-0000-00000000000b';
+insert into _resultado select 'desabilitar remove dados da agenda e mantém o login',
+  (select count(*) = 0 from eventos where user_id = '00000000-0000-0000-0000-00000000000b')
+  and (select count(*) = 1 from auth.users where id = '00000000-0000-0000-0000-00000000000b');
+
+-- nada foi criado em public
+insert into _resultado select 'nenhum objeto criado em public',
+  (select count(*) = 0 from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public')
+  and (select count(*) = 0 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public');
 
 -- ---------- Relatório ----------
 \echo

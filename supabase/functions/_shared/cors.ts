@@ -1,5 +1,5 @@
-// CORS. Em produção, defina ALLOWED_ORIGINS (separado por vírgula), ex.:
-//   supabase secrets set ALLOWED_ORIGINS=https://agenda.seudominio.com.br,http://localhost:5173
+// CORS. Em produção, defina AGENDA_ALLOWED_ORIGINS (separado por vírgula), ex.:
+//   supabase secrets set AGENDA_ALLOWED_ORIGINS=https://agenda.seudominio.com.br,http://localhost:5173
 // Sem a variável, qualquer origem é aceita (útil só em desenvolvimento).
 
 const BASE = {
@@ -8,7 +8,7 @@ const BASE = {
 }
 
 export function corsHeaders(req: Request): Record<string, string> {
-  const permitidas = (Deno.env.get('ALLOWED_ORIGINS') ?? '')
+  const permitidas = (Deno.env.get('AGENDA_ALLOWED_ORIGINS') ?? '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)

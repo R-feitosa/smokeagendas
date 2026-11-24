@@ -8,7 +8,7 @@ export async function processarAudio(blob: Blob): Promise<Rascunho> {
   // o servidor usa o próprio relógio; só o fuso vem do aparelho
   form.append('tz', Intl.DateTimeFormat().resolvedOptions().timeZone)
 
-  const { data, error } = await supabase.functions.invoke('process-audio', { body: form })
+  const { data, error } = await supabase.functions.invoke('agenda-process-audio', { body: form })
   if (error) throw new Error('Não foi possível processar o áudio')
   if (data?.erro) throw new Error(data.erro)
   return data as Rascunho

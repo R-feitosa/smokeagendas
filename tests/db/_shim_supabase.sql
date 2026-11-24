@@ -19,6 +19,6 @@ $$;
 
 grant usage on schema auth, public to anon, authenticated, service_role;
 grant execute on function auth.uid() to anon, authenticated, service_role;
--- o Supabase concede tudo por padrão e confia no RLS; reproduzimos isso
+-- o Supabase concede tudo em public por padrão; o schema agenda NÃO herda isso
 alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;

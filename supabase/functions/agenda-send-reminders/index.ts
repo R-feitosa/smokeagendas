@@ -1,4 +1,6 @@
 // Chamada a cada minuto pelo pg_cron (ver migrations/0002_cron.sql).
+// Autenticação: o cabeçalho x-cron-secret é conferido contra o Vault
+// (agenda.cron_segredo_confere) — o segredo não existe em variável de ambiente.
 //
 // 1. reivindicar_lembretes() marca e devolve, de forma atômica, os lembretes vencidos
 //    (duas execuções sobrepostas nunca pegam o mesmo lembrete).
@@ -20,39 +22,37 @@ type Lembrete = {
 }
 type Inscricao = { id: string; user_id: string; endpoint: string; p256dh: string; auth: string }
 
+// tudo da agenda fica no schema `agenda` (isolado do projeto hospedeiro)
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  { db: { schema: 'agenda' }, auth: { persistSession: false } },
 )
 
 let vapidPronto = false
 function configurarVapid(): boolean {
   if (vapidPronto) return true
-  const pub = Deno.env.get('VAPID_PUBLIC_KEY')
-  const priv = Deno.env.get('VAPID_PRIVATE_KEY')
+  const pub = Deno.env.get('AGENDA_VAPID_PUBLIC_KEY')
+  const priv = Deno.env.get('AGENDA_VAPID_PRIVATE_KEY')
   if (!pub || !priv) return false
-  webpush.setVapidDetails(Deno.env.get('VAPID_SUBJECT') ?? 'mailto:ti@example.com', pub, priv)
+  webpush.setVapidDetails(Deno.env.get('AGENDA_VAPID_SUBJECT') ?? 'mailto:ti@example.com', pub, priv)
   return (vapidPronto = true)
 }
 
-/** Comparação em tempo constante (evita descobrir o segredo pelo tempo de resposta). */
-function segredoConfere(recebido: string | null): boolean {
-  const esperado = Deno.env.get('CRON_SECRET')
-  if (!esperado || !recebido) return false
-  const a = new TextEncoder().encode(recebido)
-  const b = new TextEncoder().encode(esperado)
-  if (a.length !== b.length) return false
-  let dif = 0
-  for (let i = 0; i < a.length; i++) dif |= a[i] ^ b[i]
-  return dif === 0
+/** Confere o segredo no Vault. Sem cabeçalho, nem consulta o banco. */
+async function segredoConfere(recebido: string | null): Promise<boolean> {
+  if (!recebido || recebido.length > 200) return false
+  const { data, error } = await supabase.rpc('cron_segredo_confere', { segredo: recebido })
+  if (error) console.error('conferência do segredo falhou', error.message)
+  return data === true
 }
 
 Deno.serve(async (req) => {
-  if (!segredoConfere(req.headers.get('x-cron-secret'))) {
+  if (!(await segredoConfere(req.headers.get('x-cron-secret')))) {
     return json({ erro: 'não autorizado' }, 401)
   }
   if (!configurarVapid()) {
-    console.error('VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY não configuradas')
+    console.error('AGENDA_VAPID_PUBLIC_KEY / AGENDA_VAPID_PRIVATE_KEY não configuradas')
     return json({ erro: 'push não configurado' }, 500)
   }
 

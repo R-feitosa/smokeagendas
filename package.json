@@ -11,7 +11,7 @@
     "gen:vapid": "npx web-push generate-vapid-keys",
     "test": "npm run test:fn && npm run test:db",
     "test:fn": "cd supabase/functions && deno test --no-prompt",
-    "check:fn": "cd supabase/functions && deno check process-audio/index.ts send-reminders/index.ts",
+    "check:fn": "cd supabase/functions && deno task check",
     "test:db": "tests/db/run.sh"
   },
   "dependencies": {

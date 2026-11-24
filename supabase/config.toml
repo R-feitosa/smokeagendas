@@ -1,9 +1,16 @@
+# Usado só pelo Supabase CLI local (supabase start / functions serve).
+# ATENÇÃO: este repositório roda DENTRO do projeto rf-ops, no schema `agenda`.
+# NÃO rode `supabase link` + `supabase db push` contra o rf-ops a partir daqui:
+# o histórico de migrations do rf-ops é de outro sistema. Ver README → Deploy.
 project_id = "agenda-voz"
 
-# O cron chama esta função com um segredo próprio (CRON_SECRET), não com JWT de usuário
-[functions.send-reminders]
+[api]
+schemas = ["public", "graphql_public", "agenda"]
+
+# O cron chama esta função com um segredo próprio (conferido no Vault), não com JWT de usuário
+[functions.agenda-send-reminders]
 verify_jwt = false
 
 # Esta exige usuário logado (JWT) — é o padrão
-[functions.process-audio]
+[functions.agenda-process-audio]
 verify_jwt = true
