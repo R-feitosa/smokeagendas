@@ -1,18 +1,51 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { Marca } from './Marca'
 import { IconeMic } from './Recorder'
+
+// ícones de traço, na cor do texto da aba (combinam com a marca, ao contrário dos emojis)
+const tracos = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true }
+const IconeHoje = () => (
+  <svg {...tracos}>
+    <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+    <path d="M3.5 9.5h17M8 3v4M16 3v4" />
+    <circle cx="12" cy="15" r="1.6" fill="currentColor" stroke="none" />
+  </svg>
+)
+const IconeCalendario = () => (
+  <svg {...tracos}>
+    <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+    <path d="M3.5 9.5h17M8 3v4M16 3v4M8 13h.01M12 13h.01M16 13h.01M8 16.5h.01M12 16.5h.01" />
+  </svg>
+)
+const IconeAjustes = () => (
+  <svg {...tracos}>
+    <path d="M4 7h10M18 7h2M4 17h4M12 17h8" />
+    <circle cx="16" cy="7" r="2" />
+    <circle cx="10" cy="17" r="2" />
+  </svg>
+)
 
 export function Layout() {
   return (
     <div className="app">
+      <header className="topo">
+        <Marca />
+      </header>
       <main className="app__conteudo">
         <Outlet />
       </main>
       <nav className="tabbar">
         <NavLink to="/" end>
-          <span>📅</span>Hoje
+          <span>
+            <IconeHoje />
+          </span>
+          Hoje
         </NavLink>
         <NavLink to="/calendario">
-          <span>🗓</span>Calendário
+          <span>
+            <IconeCalendario />
+          </span>
+          Calendário
         </NavLink>
         <NavLink to="/gravar" className="tabbar__gravar">
           <span>
@@ -21,7 +54,10 @@ export function Layout() {
           Gravar
         </NavLink>
         <NavLink to="/ajustes">
-          <span>⚙️</span>Ajustes
+          <span>
+            <IconeAjustes />
+          </span>
+          Ajustes
         </NavLink>
       </nav>
     </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Marca } from '../components/Marca'
 import { mensagemErroLogin, supabase } from '../lib/supabase'
 
 export function Login({ erroInicial = null }: { erroInicial?: string | null }) {
@@ -18,9 +19,12 @@ export function Login({ erroInicial = null }: { erroInicial?: string | null }) {
 
   return (
     <div className="login">
-      <h1>Agenda por Voz</h1>
-      <p>Entre com a conta do escritório.</p>
-      <form className="form" onSubmit={entrar}>
+      <div className="login__marca">
+        <Marca tamanho="g" />
+      </div>
+      <form className="form login__cartao" onSubmit={entrar}>
+        <h1>Agenda por Voz</h1>
+        <p className="sub">Entre com a conta do escritório.</p>
         <label>
           E-mail
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />

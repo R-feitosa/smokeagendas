@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
+import { Marca } from './components/Marca'
 import { useSession } from './hooks/useSession'
 import { Ajustes } from './pages/Ajustes'
 import { Gravar } from './pages/Gravar'
@@ -14,7 +15,9 @@ export default function App() {
   if (!configurado)
     return (
       <div className="login">
-        <h1>Agenda por Voz</h1>
+        <div className="login__marca">
+          <Marca tamanho="g" />
+        </div>
         <p className="aviso">
           Este endereço foi publicado sem a configuração correta do servidor (confira <code>VITE_SUPABASE_URL</code> e{' '}
           <code>VITE_SUPABASE_ANON_KEY</code>). Cadastre as variáveis na Vercel e faça um novo deploy.
@@ -25,7 +28,12 @@ export default function App() {
       </div>
     )
 
-  if (carregando) return <p className="splash">Carregando…</p>
+  if (carregando)
+    return (
+      <div className="splash">
+        <Marca tamanho="g" />
+      </div>
+    )
   if (!session) return <Login erroInicial={erroEntrada} />
 
   return (
