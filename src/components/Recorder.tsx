@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Fumaca } from './Fumaca'
 import { DURACAO_MAX_MS, DURACAO_MIN_MS, ErroGravacao, iniciarGravacao, type Gravacao } from '../lib/recorder'
 
 type Props = {
@@ -117,6 +118,7 @@ export function Recorder({ onComecar, onGravado, onErro }: Props) {
   return (
     <div className="recorder">
       <div className="recorder__palco">
+        {gravando && <Fumaca className="recorder__fumaca" escura />}
         <div ref={halo} className={`recorder__halo ${gravando ? 'recorder__halo--on' : ''}`} aria-hidden="true" />
         <button
           type="button"

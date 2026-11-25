@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { Fumaca } from './Fumaca'
 import { Marca } from './Marca'
 import { IconeMic } from './Recorder'
 
@@ -29,6 +30,8 @@ export function Layout() {
   return (
     <div className="app">
       <header className="topo">
+        <Fumaca className="topo__fumaca topo__fumaca--a" />
+        <Fumaca className="topo__fumaca topo__fumaca--b" />
         <Marca />
       </header>
       <main className="app__conteudo">

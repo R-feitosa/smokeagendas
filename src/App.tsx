@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
+import { Fumaca } from './components/Fumaca'
 import { Marca } from './components/Marca'
 import { useSession } from './hooks/useSession'
 import { Ajustes } from './pages/Ajustes'
@@ -16,6 +17,7 @@ export default function App() {
     return (
       <div className="login">
         <div className="login__marca">
+          <Fumaca className="marca__fumaca" />
           <Marca tamanho="g" />
         </div>
         <p className="aviso">
@@ -31,7 +33,10 @@ export default function App() {
   if (carregando)
     return (
       <div className="splash">
-        <Marca tamanho="g" />
+        <div className="login__marca">
+          <Fumaca className="marca__fumaca" />
+          <Marca tamanho="g" />
+        </div>
       </div>
     )
   if (!session) return <Login erroInicial={erroEntrada} />

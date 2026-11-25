@@ -1,8 +1,9 @@
 :root {
-  /* Feitosa Participações Imobiliárias: azul-marinho da marca + branco */
-  --cor: #1f3658;
-  --cor-escura: #152640;
-  --cor-clara: #e8edf5;
+  /* Smoke Feitosa: azul royal de maço (degradê) + branco da marca Feitosa */
+  --cor: #22357a;
+  --cor-escura: #121b45;
+  --cor-clara: #e6eaf6;
+  --degrade: linear-gradient(160deg, #2c4296 0%, #1d2d6e 55%, #121b45 100%);
   --marca-branco: #e8e8e8;
   --texto: #121b2c;
   --suave: #5d6779;
@@ -23,7 +24,7 @@ h3 { font-size: 1rem; margin-top: 20px; }
 
 .app { min-height: 100%; display: flex; flex-direction: column; }
 .app__conteudo { flex: 1; padding: 20px 16px calc(var(--tab-h) + 24px + env(safe-area-inset-bottom)); max-width: 640px; width: 100%; margin: 0 auto; }
-.splash { min-height: 100%; display: grid; place-items: center; background: var(--cor); }
+.splash { min-height: 100%; display: grid; place-items: center; background: var(--degrade); }
 .sub { color: var(--suave); margin: 0 0 16px; }
 .vazio { color: var(--suave); }
 .erro { color: var(--erro); }
@@ -58,6 +59,7 @@ h3 { font-size: 1rem; margin-top: 20px; }
 .form__acoes { display: flex; gap: 10px; }
 .form__acoes .btn { flex: 1; }
 .btn { font: inherit; font-weight: 600; padding: 12px 18px; border: 0; border-radius: 12px; background: var(--cor); color: #fff; }
+.btn:not(.btn--sec) { background: var(--degrade); }
 .btn:disabled { opacity: .6; }
 .btn--sec { background: var(--cor-clara); color: var(--cor); }
 .transcricao { margin: 0; padding: 10px 12px; background: var(--cor-clara); border-radius: 10px; color: var(--cor); font-style: italic; }
@@ -65,7 +67,7 @@ h3 { font-size: 1rem; margin-top: 20px; }
 /* gravador */
 .recorder { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 24px; text-align: center; }
 .recorder__palco { position: relative; width: 132px; height: 132px; display: grid; place-items: center; margin: 24px 0 8px; }
-.recorder__botao { position: relative; width: 132px; height: 132px; border-radius: 50%; border: 0; background: var(--cor); color: #fff; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(31, 54, 88, .35); transition: transform .12s, background .2s; }
+.recorder__botao { position: relative; width: 132px; height: 132px; border-radius: 50%; border: 0; background: var(--degrade); color: #fff; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(34, 53, 122, .35); transition: transform .12s, background .2s; }
 .recorder__botao:active:not(:disabled) { transform: scale(.95); }
 .recorder__botao:disabled { opacity: .6; }
 .recorder__botao:focus-visible { outline: 3px solid var(--cor); outline-offset: 4px; }
@@ -88,7 +90,7 @@ h3 { font-size: 1rem; margin-top: 20px; }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } .recorder__halo { transition: none; } }
 
 /* aba central de gravar em destaque */
-.tabbar a.tabbar__gravar span { display: grid; place-items: center; width: 44px; height: 44px; margin-top: -14px; border-radius: 50%; background: var(--cor); color: #fff; box-shadow: 0 4px 12px rgba(31, 54, 88, .4); }
+.tabbar a.tabbar__gravar span { display: grid; place-items: center; width: 44px; height: 44px; margin-top: -14px; border-radius: 50%; background: var(--degrade); color: #fff; box-shadow: 0 4px 12px rgba(34, 53, 122, .4); }
 
 /* calendário */
 .segmentado { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--cor-clara); border-radius: 12px; padding: 4px; gap: 4px; margin: 8px 0 12px; }
@@ -126,13 +128,37 @@ h3 { font-size: 1rem; margin-top: 20px; }
 .marca--g .marca__nome { font-size: 2.5rem; }
 .marca--g .marca__sub { font-size: .74rem; margin-top: 6px; }
 
+/* fumaça */
+.fumaca { position: absolute; pointer-events: none; overflow: visible; }
+.fumaca__fio { fill: none; stroke: rgba(255, 255, 255, .5); stroke-width: 5; stroke-linecap: round; opacity: 0;
+  transform-box: fill-box; transform-origin: 50% 100%; animation: fumaca-sobe 6.5s ease-in infinite; }
+.fumaca--escura .fumaca__fio { stroke: rgba(60, 70, 110, .5); stroke-width: 7; }
+.fumaca__fio--1 { animation-duration: 7.5s; animation-delay: 2.2s; }
+.fumaca__fio--2 { animation-duration: 6s; animation-delay: 4.1s; stroke-width: 4; }
+@keyframes fumaca-sobe {
+  0% { opacity: 0; transform: translateY(14%) scaleY(.85) skewX(0deg); }
+  25% { opacity: .7; }
+  70% { opacity: .28; }
+  100% { opacity: 0; transform: translateY(-18%) scaleY(1.12) skewX(7deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fumaca__fio { animation: none; opacity: .22; }
+}
+.topo__fumaca { bottom: -18px; width: 54px; height: 120px; }
+.topo__fumaca--a { left: 6%; }
+.topo__fumaca--b { right: 5%; transform: scaleX(-1); }
+.topo .marca { position: relative; }
+/* sai do alto do prédio do logo grande */
+.marca__fumaca { left: 50%; bottom: calc(100% - 26px); width: 70px; height: 130px; transform: translateX(-62%); }
+.recorder__fumaca { left: 50%; bottom: 84%; width: 70px; height: 96px; transform: translateX(-50%); }
+
 /* faixa do topo */
-.topo { background: var(--cor); padding: calc(10px + env(safe-area-inset-top)) 16px 10px; display: flex; justify-content: center; box-shadow: 0 1px 0 rgba(0, 0, 0, .08); }
+.topo { position: relative; overflow: hidden; background: var(--degrade); padding: calc(10px + env(safe-area-inset-top)) 16px 10px; display: flex; justify-content: center; box-shadow: 0 1px 0 rgba(0, 0, 0, .08); }
 
 /* login */
-.login { min-height: 100%; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: calc(12vh + env(safe-area-inset-top)) 20px 24px; background: linear-gradient(var(--cor) 0 46%, #f4f6f9 46%); }
-.login__marca { padding: 8px 0 4px; }
-.login__cartao { width: 100%; max-width: 360px; background: #fff; border-radius: 16px; padding: 22px 18px; box-shadow: 0 12px 32px rgba(21, 38, 64, .18); }
+.login { min-height: 100%; display: flex; flex-direction: column; align-items: center; gap: 28px; padding: calc(12vh + env(safe-area-inset-top)) 20px 24px; background: linear-gradient(#2c4296, #1d2d6e 34%, #121b45 46%, #f4f6f9 46%); }
+.login__marca { position: relative; padding: 8px 0 4px; }
+.login__cartao { width: 100%; max-width: 360px; background: #fff; border-radius: 16px; padding: 22px 18px; box-shadow: 0 12px 32px rgba(18, 27, 69, .18); }
 .login__cartao h1 { font-size: 1.25rem; margin: 0; }
 .login__cartao .sub { margin: -6px 0 4px; }
 .login > .aviso { max-width: 360px; }
