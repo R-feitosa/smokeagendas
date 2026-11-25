@@ -13,6 +13,24 @@ export function Ajustes() {
   const equipe = useEquipe()
   const [textoEquipe, setTextoEquipe] = useState<string | null>(null)
   const [msgEquipe, setMsgEquipe] = useState<string | null>(null)
+  const [msgVersao, setMsgVersao] = useState<string | null>(null)
+
+  async function procurarAtualizacao() {
+    setMsgVersao('Procurando…')
+    try {
+      const reg = await navigator.serviceWorker?.getRegistration()
+      await reg?.update()
+      if (reg?.installing || reg?.waiting) {
+        setMsgVersao('Versão nova encontrada. Recarregando…')
+        // normalmente recarrega sozinho ao assumir; garante caso demore
+        setTimeout(() => window.location.reload(), 4000)
+      } else {
+        setMsgVersao('Você já está na versão mais recente.')
+      }
+    } catch {
+      setMsgVersao('Sem conexão para procurar atualização.')
+    }
+  }
 
   useEffect(() => {
     statusPush().then(setStatus)
@@ -133,6 +151,13 @@ export function Ajustes() {
           </button>
         </>
       )}
+
+      <h3>Versão</h3>
+      <p className="sub">Versão {__VERSAO__}</p>
+      <button className="btn btn--sec" onClick={procurarAtualizacao}>
+        Procurar atualização
+      </button>
+      {msgVersao && <p className="sub">{msgVersao}</p>}
     </section>
   )
 }

@@ -1,8 +1,27 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { execSync } from 'node:child_process'
+
+// versão exibida em Ajustes: commit (a Vercel informa em VERCEL_GIT_COMMIT_SHA) + data/hora do build
+function commitAtual(): string {
+  if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7)
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim()
+  } catch {
+    return 'local'
+  }
+}
+const dataBuild = new Date().toLocaleString('pt-BR', {
+  timeZone: 'America/Fortaleza',
+  day: '2-digit',
+  month: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+})
 
 export default defineConfig({
+  define: { __VERSAO__: JSON.stringify(`${commitAtual()} · ${dataBuild}`) },
   plugins: [
     react(),
     VitePWA({
@@ -13,7 +32,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // inclui as fontes da marca no cache offline
       injectManifest: { globPatterns: ['**/*.{js,css,html,png,svg,ico,webmanifest,woff2}'] },
-      injectRegister: 'auto',
+      // o registro é feito em src/main.tsx (registerSW), com busca de atualização
+      injectRegister: false,
       manifest: {
         name: 'Agenda por Voz',
         short_name: 'Agenda',
