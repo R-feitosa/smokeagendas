@@ -21,7 +21,7 @@ Celular (PWA)                         Supabase
 agenda-voz/
 ├── public/icons/                 ícones do PWA (192, 512, maskable)
 ├── src/
-│   ├── main.tsx · App.tsx        entrada e rotas (Hoje, Semana, Gravar, Ajustes)
+│   ├── main.tsx · App.tsx        entrada e rotas (Hoje, Calendário, Gravar, Ajustes)
 │   ├── sw.ts                     service worker: cache + push + botões da notificação
 │   ├── styles.css
 │   ├── components/
@@ -29,7 +29,7 @@ agenda-voz/
 │   │   ├── Recorder.tsx          botão de gravar: medidor de volume, cronômetro, limite de 2 min, cancelar
 │   │   ├── ConfirmEvento.tsx     conferência do rascunho antes de salvar
 │   │   └── EventCard.tsx
-│   ├── pages/                    Login · Hoje · Semana · Gravar · Ajustes
+│   ├── pages/                    Login · Hoje · Calendário (dia/semana/mês) · Gravar · Ajustes
 │   ├── hooks/
 │   │   ├── useSession.ts
 │   │   └── useAcaoNotificacao.ts "Concluir" / "Adiar" vindos da notificação

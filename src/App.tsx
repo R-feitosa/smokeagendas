@@ -5,7 +5,7 @@ import { Ajustes } from './pages/Ajustes'
 import { Gravar } from './pages/Gravar'
 import { Hoje } from './pages/Hoje'
 import { Login } from './pages/Login'
-import { Semana } from './pages/Semana'
+import { Calendario } from './pages/Calendario'
 import { configurado, servidor } from './lib/supabase'
 
 export default function App() {
@@ -32,7 +32,8 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Hoje />} />
-        <Route path="semana" element={<Semana />} />
+        <Route path="calendario" element={<Calendario />} />
+        <Route path="semana" element={<Navigate to="/calendario" replace />} />
         <Route path="gravar" element={<Gravar />} />
         <Route path="novo" element={<Navigate to="/gravar" replace />} />
         <Route path="ajustes" element={<Ajustes />} />

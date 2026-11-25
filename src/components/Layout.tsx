@@ -11,8 +11,8 @@ export function Layout() {
         <NavLink to="/" end>
           <span>📅</span>Hoje
         </NavLink>
-        <NavLink to="/semana">
-          <span>🗓</span>Semana
+        <NavLink to="/calendario">
+          <span>🗓</span>Calendário
         </NavLink>
         <NavLink to="/gravar" className="tabbar__gravar">
           <span>

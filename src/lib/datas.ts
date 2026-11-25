@@ -54,3 +54,53 @@ export function rotuloDia(d: Date): string {
   if (diff === 1) return 'Amanhã'
   return dataPorExtenso(d)
 }
+
+// ---- calendário (sempre no fuso do aparelho; semana começa no domingo, como no calendário brasileiro) ----
+
+export function mesmoDia(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
+/** Chave estável do dia local, ex.: "2026-11-25" (para agrupar compromissos por dia) */
+export function chaveDia(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+export function inicioDaSemana(d: Date): Date {
+  return somarDias(inicioDoDia(d), -inicioDoDia(d).getDay())
+}
+
+export function inicioDoMes(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), 1)
+}
+
+/** Soma meses mantendo o dia quando possível (31/01 + 1 mês = 28/02 ou 29/02) */
+export function somarMeses(d: Date, meses: number): Date {
+  const alvo = new Date(d.getFullYear(), d.getMonth() + meses, 1)
+  const ultimoDia = new Date(alvo.getFullYear(), alvo.getMonth() + 1, 0).getDate()
+  alvo.setDate(Math.min(d.getDate(), ultimoDia))
+  return alvo
+}
+
+/** Dias exibidos na grade do mês: semanas completas, do domingo antes do dia 1 ao sábado depois do último dia */
+export function gradeDoMes(d: Date): Date[] {
+  const inicio = inicioDaSemana(inicioDoMes(d))
+  const fimDoMes = new Date(d.getFullYear(), d.getMonth() + 1, 0)
+  const total = Math.round((somarDias(inicioDaSemana(fimDoMes), 7).getTime() - inicio.getTime()) / 86_400_000)
+  return Array.from({ length: total }, (_, i) => somarDias(inicio, i))
+}
+
+/** "Novembro de 2026" */
+export function rotuloMes(d: Date): string {
+  return capitalizar(d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }))
+}
+
+/** "22 a 28 de novembro" ou, cruzando o mês, "29 de dezembro a 4 de janeiro" */
+export function rotuloSemana(d: Date): string {
+  const ini = inicioDaSemana(d)
+  const fim = somarDias(ini, 6)
+  const mes = (x: Date) => x.toLocaleDateString('pt-BR', { month: 'long' })
+  return ini.getMonth() === fim.getMonth()
+    ? `${ini.getDate()} a ${fim.getDate()} de ${mes(fim)}`
+    : `${ini.getDate()} de ${mes(ini)} a ${fim.getDate()} de ${mes(fim)}`
+}
