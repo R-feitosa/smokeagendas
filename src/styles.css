@@ -37,6 +37,8 @@ h3 { font-size: 1rem; margin-top: 20px; }
 .lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .card { display: flex; gap: 12px; align-items: flex-start; background: #fff; border: 1px solid var(--borda); border-radius: 14px; padding: 12px; }
 .card--feito { opacity: .55; }
+.card--prevista { border-style: dashed; background: #fcfcff; }
+.selo { display: inline-block; margin-top: 6px; font-size: .7rem; font-weight: 600; letter-spacing: .02em; color: var(--cor); background: var(--cor-clara); border-radius: 999px; padding: 2px 8px; }
 .card--feito strong { text-decoration: line-through; }
 .card__hora { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--cor); min-width: 48px; }
 .card__corpo { flex: 1; min-width: 0; }
@@ -104,6 +106,8 @@ h3 { font-size: 1rem; margin-top: 20px; }
 .cal__dia:focus-visible { outline: 2px solid var(--cor); outline-offset: 1px; }
 .cal__pontos { display: flex; gap: 2px; align-items: center; height: 6px; }
 .cal__pontos i { width: 5px; height: 5px; border-radius: 50%; background: var(--cor); }
+.cal__pontos i.prev { background: transparent; box-shadow: inset 0 0 0 1.2px var(--cor); }
+.cal__dia--sel .cal__pontos i.prev { background: transparent; box-shadow: inset 0 0 0 1.2px #fff; }
 .cal__pontos b { font-size: .6rem; line-height: 1; color: inherit; }
 .cal__faixa { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: #fff; border: 1px solid var(--borda); border-radius: 14px; padding: 6px; }
 .cal__faixa .cal__dia small { font-size: .68rem; color: var(--suave); font-weight: 600; }

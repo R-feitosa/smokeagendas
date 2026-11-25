@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { EventCard } from '../components/EventCard'
-import { concluirEvento, excluirEvento, listarEventos } from '../lib/api'
+import { concluirEvento, excluirEvento, listarEventos, listarPrevistas } from '../lib/api'
 import {
   chaveDia,
   dataPorExtenso,
@@ -64,7 +64,8 @@ export function Calendario() {
 
   const carregar = useCallback(async () => {
     try {
-      setEventos(await listarEventos(de, ate))
+      const [gravados, previstos] = await Promise.all([listarEventos(de, ate), listarPrevistas(de, ate)])
+      setEventos([...gravados, ...previstos].sort((a, b) => a.inicio.localeCompare(b.inicio)))
       setErro(null)
     } catch {
       setErro('Não foi possível carregar a agenda')
@@ -121,13 +122,14 @@ export function Calendario() {
     </ul>
   )
 
-  const pontos = (n: number) =>
-    n > 0 && (
+  // um ponto por compromisso (até 3); repetição prevista = ponto vazado
+  const pontos = (evs: Evento[]) =>
+    evs.length > 0 && (
       <span className="cal__pontos" aria-hidden="true">
-        {Array.from({ length: Math.min(n, 3) }, (_, i) => (
-          <i key={i} />
+        {evs.slice(0, 3).map((e) => (
+          <i key={e.id} className={e.prevista ? 'prev' : undefined} />
         ))}
-        {n > 3 && <b>+</b>}
+        {evs.length > 3 && <b>+</b>}
       </span>
     )
 
@@ -187,7 +189,7 @@ export function Calendario() {
                   onClick={() => setDia(d)}
                 >
                   <span>{d.getDate()}</span>
-                  {pontos(n)}
+                  {pontos(doDia(d))}
                 </button>
               )
             })}
@@ -213,7 +215,7 @@ export function Calendario() {
               >
                 <small>{DIAS_DA_SEMANA[d.getDay()]}</small>
                 <span>{d.getDate()}</span>
-                {pontos(doDia(d).length)}
+                {pontos(doDia(d))}
               </button>
             ))}
           </div>

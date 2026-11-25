@@ -26,6 +26,32 @@ export async function listarEventos(de: Date, ate: Date): Promise<Evento[]> {
   return data as Evento[]
 }
 
+type Projecao = Pick<Evento, 'serie_id' | 'ocorrencia_n' | 'inicio' | 'fim' | 'titulo' | 'descricao' | 'lembrar_min_antes' | 'recorrencia'>
+
+/**
+ * Repetições futuras ainda não gravadas (o servidor grava só 7 dias à frente).
+ * Calculadas no banco com a mesma regra do gerador (agenda.projetar_ocorrencias).
+ * Se falhar, o calendário segue só com o que está gravado.
+ */
+export async function listarPrevistas(de: Date, ate: Date): Promise<Evento[]> {
+  const { data, error } = await supabase.rpc('projetar_ocorrencias', { p_de: de.toISOString(), p_ate: ate.toISOString() })
+  if (error) {
+    console.warn('projeção de repetições indisponível:', error.message)
+    return []
+  }
+  return (data as Projecao[]).map((p) => ({
+    ...p,
+    id: `prevista-${p.serie_id}-${p.ocorrencia_n}`,
+    user_id: '',
+    adiar_ate: null,
+    lembrete_enviado_em: null,
+    status: 'pendente',
+    transcricao: null,
+    lembretes_enviados: 0,
+    prevista: true,
+  }))
+}
+
 export async function criarEvento(r: Rascunho): Promise<void> {
   const { error } = await supabase.from('eventos').insert({
     titulo: r.titulo,

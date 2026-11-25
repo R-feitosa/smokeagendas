@@ -41,7 +41,9 @@ agenda-voz/
     ├── config.toml
     ├── migrations/
     │   ├── 0001_init.sql         schema agenda: tabelas, RLS, reivindicar_lembretes()
-    │   └── 0002_cron.sql         agendador de 1 em 1 minuto (segredo no Vault)
+    │   ├── 0002_cron.sql         agendador de 1 em 1 minuto (segredo no Vault)
+    │   ├── 0003_recorrencia_reenvio.sql  séries (7 dias gravados) + reenvio do lembrete
+    │   └── 0004_projecao_recorrencia.sql projetar_ocorrencias(): repetições futuras p/ o calendário
     └── functions/
         ├── _shared/cors.ts
         ├── agenda-process-audio/ transcrever.ts → extrair.ts → validar.ts → rascunho
@@ -61,7 +63,7 @@ compartilháveis têm prefixo próprio:
 | Job do pg_cron | `agenda-enviar-lembretes` |
 | Vault | `agenda_cron_secret` (gerado no banco), `agenda_project_url` |
 | Secrets das funções | `AGENDA_GROQ_API_KEY` (ou `AGENDA_OPENAI_API_KEY`), `AGENDA_VAPID_PUBLIC_KEY`, `AGENDA_VAPID_PRIVATE_KEY`, `AGENDA_VAPID_SUBJECT`, `AGENDA_ALLOWED_ORIGINS` |
-| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio` |
+| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia` |
 
 **Único ponto compartilhado: o login.** Os usuários ficam no Authentication do rf-ops,
 mas estar lá **não dá acesso** à agenda. Só usa o app quem for habilitado:
@@ -82,8 +84,8 @@ delete from agenda.perfis where id = (select id from auth.users where email = 'f
    npm install
    cp .env.example .env
    ```
-2. **Banco** — já aplicado no rf-ops (`agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`).
-   Para um ambiente novo, rode `supabase/migrations/0001` → `0002` → `0003` no SQL Editor e depois:
+2. **Banco** — já aplicado no rf-ops (`agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`).
+   Para um ambiente novo, rode `supabase/migrations/0001` → `0002` → `0003` → `0004` no SQL Editor e depois:
    ```sql
    select vault.create_secret('https://SEU_REF.supabase.co', 'agenda_project_url');
    ```
@@ -118,7 +120,7 @@ delete from agenda.perfis where id = (select id from auth.users where email = 'f
 | Falha de envio | Se nenhum aparelho recebeu por erro transitório, `liberar_lembrete()` devolve à fila e tenta no minuto seguinte (até 2h após o início) | `send-reminders` |
 | Remarcação | Mudar `inicio` ou `lembrar_min_antes` rearma o lembrete (trigger) | `0001_init.sql` |
 | Fuso | Texto "Hoje/Amanhã/Sexta, 28/11 às 09:00" no fuso do perfil (`agenda.perfis.fuso`, padrão `America/Fortaleza`) | `_shared/datas.ts` |
-| Recorrência | Ocorrências materializadas até 7 dias à frente; a ocorrência *k* = âncora + *k* × passo **no fuso da pessoa** (sem deriva: 31/01 mensal → 28/02 → 31/03; hora local mantida no horário de verão). Cancelar uma não encerra a série; `agenda.encerrar_serie(id)` encerra; trocar o passo inicia série nova e cancela as posteriores da antiga | `0003` |
+| Recorrência | Ocorrências materializadas até 7 dias à frente; a ocorrência *k* = âncora + *k* × passo **no fuso da pessoa** (sem deriva: 31/01 mensal → 28/02 → 31/03; hora local mantida no horário de verão). Cancelar uma não encerra a série; `agenda.encerrar_serie(id)` encerra; trocar o passo inicia série nova e cancela as posteriores da antiga. O calendário mostra as repetições além dos 7 dias como "previstas", calculadas por `agenda.projetar_ocorrencias(de, ate)` com a mesma regra (só leitura, RLS) | `0003`, `0004` |
 | Reenvio até confirmar | Pendente após o 1º aviso → novo aviso a cada `perfis.reenviar_a_cada_min` (padrão 5), até `perfis.max_reenvios` (padrão 3; 0 desliga). Concluir para; "Adiar" e remarcar zeram a contagem. Cada envio tem `tag` própria (toca de novo) e o service worker fecha os avisos anteriores do mesmo compromisso | `0003`, `_shared/notificacao.ts`, `src/sw.ts` |
 | Provedor de IA | Groq (padrão, via `AGENDA_GROQ_API_KEY`) ou OpenAI; mesma API. Modelos em lista de preferência com troca automática se um for descontinuado; fixáveis por `AGENDA_IA_MODELO_*` | `agenda-process-audio/provedor.ts` |
 | Data errada da IA | "Agora" vem do relógio do servidor com dia da semana; a resposta é validada (ISO com offset, limites) antes de voltar ao app | `process-audio/validar.ts` |
@@ -142,7 +144,7 @@ select status_code, content::jsonb from net._http_response where id = <request_i
 
 ```bash
 npm run test:fn    # Deno: datas/fuso e validação do rascunho
-npm run test:db    # Postgres local: isolamento/RLS, fila de lembretes, recorrência, reenvio
+npm run test:db    # Postgres local: isolamento/RLS, fila de lembretes, recorrência, reenvio, projeção
 ```
 
 `test:db` precisa de um Postgres acessível (`PGHOST`, `PGPORT`, `PGUSER`); ele cria e apaga um banco

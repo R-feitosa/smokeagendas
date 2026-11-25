@@ -19,6 +19,8 @@ export type Evento = {
   /** série recorrente: mesma para todas as ocorrências */
   serie_id: string | null
   ocorrencia_n: number | null
+  /** repetição calculada (ainda não gravada no banco): só para exibir no calendário */
+  prevista?: boolean
 }
 
 /** Preferências da pessoa (agenda.perfis) */
