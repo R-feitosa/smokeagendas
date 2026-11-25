@@ -70,7 +70,7 @@ compartilháveis têm prefixo próprio:
 | Job do pg_cron | `agenda-enviar-lembretes` |
 | Vault | `agenda_cron_secret` (gerado no banco), `agenda_project_url` |
 | Secrets das funções | `AGENDA_GROQ_API_KEY` (ou `AGENDA_OPENAI_API_KEY`), `AGENDA_VAPID_PUBLIC_KEY`, `AGENDA_VAPID_PRIVATE_KEY`, `AGENDA_VAPID_SUBJECT`, `AGENDA_ALLOWED_ORIGINS` |
-| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`; **a aplicar:** `agenda_0007_apartamentos` |
+| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`, `agenda_0007_apartamentos` |
 
 **Único ponto compartilhado: o login.** Os usuários ficam no Authentication do rf-ops,
 mas estar lá **não dá acesso** à agenda. Só usa o app quem for habilitado:
@@ -91,8 +91,7 @@ delete from agenda.perfis where id = (select id from auth.users where email = 'f
    npm install
    cp .env.example .env
    ```
-2. **Banco** — já aplicado no rf-ops (`agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`).
-   **Falta aplicar** a `0007_apartamentos.sql` (nome `agenda_0007_apartamentos`): até lá a aba Apartamentos avisa que a lista ainda não existe no servidor.
+2. **Banco** — já aplicado no rf-ops (`agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`, `agenda_0007_apartamentos`).
    Para um ambiente novo, rode `supabase/migrations/0001` → `0002` → `0003` → `0004` → `0005` → `0006` → `0007` no SQL Editor e depois:
    ```sql
    select vault.create_secret('https://SEU_REF.supabase.co', 'agenda_project_url');
