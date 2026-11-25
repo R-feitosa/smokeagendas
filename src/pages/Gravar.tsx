@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ConfirmEvento } from '../components/ConfirmEvento'
+import { Fumaca, type FumacaHandle } from '../components/Fumaca'
 import { Recorder } from '../components/Recorder'
 import { criarEvento, processarAudio } from '../lib/api'
 import type { Rascunho } from '../lib/types'
@@ -21,6 +22,13 @@ export function Gravar() {
   const [rascunho, setRascunho] = useState<Rascunho | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
+  const spinner = useRef<HTMLDivElement>(null)
+  const fumaca = useRef<FumacaHandle>(null)
+
+  // "puf" ao terminar de gravar: a baforada sai de onde estava o botão
+  useEffect(() => {
+    if (etapa === 'processando') fumaca.current?.rajada(24)
+  }, [etapa])
 
   async function enviar(blob: Blob) {
     setErro(null)
@@ -86,7 +94,10 @@ export function Gravar() {
 
       {etapa === 'processando' && (
         <div className="processando" role="status">
-          <div className="spinner" aria-hidden="true" />
+          <div className="processando__palco">
+            <Fumaca ref={fumaca} className="processando__fumaca" tom="escuro" fonte={spinner} ponto={{ x: 0.5, y: 0.2 }} taxa={4} aneis={0.6} escala={1.1} />
+            <div ref={spinner} className="spinner" aria-hidden="true" />
+          </div>
           <p>Entendendo o que você disse…</p>
         </div>
       )}

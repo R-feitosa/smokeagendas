@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Fumaca } from './Fumaca'
+import { Fumaca, type FumacaHandle } from './Fumaca'
 import { DURACAO_MAX_MS, DURACAO_MIN_MS, ErroGravacao, iniciarGravacao, type Gravacao } from '../lib/recorder'
 
 type Props = {
@@ -35,6 +35,8 @@ export function Recorder({ onComecar, onGravado, onErro }: Props) {
   const inicio = useRef(0)
   const montado = useRef(false)
   const halo = useRef<HTMLDivElement>(null)
+  const botao = useRef<HTMLButtonElement>(null)
+  const fumaca = useRef<FumacaHandle>(null)
   // os callbacks mudam a cada render; o cronômetro precisa sempre dos mais recentes
   const cb = useRef({ onComecar, onGravado, onErro })
   cb.current = { onComecar, onGravado, onErro }
@@ -54,6 +56,7 @@ export function Recorder({ onComecar, onGravado, onErro }: Props) {
     if (!g) return // já finalizado (toque + limite de tempo ao mesmo tempo)
     gravacao.current = null
     const duracao = Date.now() - inicio.current
+    fumaca.current?.rajada(22) // "puf" ao terminar
     setGravando(false)
     setDecorrido(0)
     const audio = await g.parar()
@@ -118,9 +121,20 @@ export function Recorder({ onComecar, onGravado, onErro }: Props) {
   return (
     <div className="recorder">
       <div className="recorder__palco">
-        {gravando && <Fumaca className="recorder__fumaca" escura />}
+        <Fumaca
+          ref={fumaca}
+          className="recorder__fumaca"
+          tom="escuro"
+          fonte={botao}
+          ponto={{ x: 0.5, y: 0.12 }}
+          taxa={gravando ? 5 : 0}
+          aneis={gravando ? 0.55 : 0}
+          // fala mais alto, mais fumaça
+          intensidade={() => 0.5 + (gravacao.current?.nivel() ?? 0) * 3.5}
+        />
         <div ref={halo} className={`recorder__halo ${gravando ? 'recorder__halo--on' : ''}`} aria-hidden="true" />
         <button
+          ref={botao}
           type="button"
           className={`recorder__botao ${gravando ? 'recorder__botao--on' : ''}`}
           onClick={alternar}

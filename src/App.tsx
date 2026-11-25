@@ -1,7 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
-import { Fumaca } from './components/Fumaca'
-import { Marca } from './components/Marca'
+import { MarcaFumegante } from './components/MarcaFumegante'
 import { useSession } from './hooks/useSession'
 import { Ajustes } from './pages/Ajustes'
 import { Gravar } from './pages/Gravar'
@@ -16,10 +15,7 @@ export default function App() {
   if (!configurado)
     return (
       <div className="login">
-        <div className="login__marca">
-          <Fumaca className="marca__fumaca" />
-          <Marca tamanho="g" />
-        </div>
+        <MarcaFumegante />
         <p className="aviso">
           Este endereço foi publicado sem a configuração correta do servidor (confira <code>VITE_SUPABASE_URL</code> e{' '}
           <code>VITE_SUPABASE_ANON_KEY</code>). Cadastre as variáveis na Vercel e faça um novo deploy.
@@ -33,10 +29,7 @@ export default function App() {
   if (carregando)
     return (
       <div className="splash">
-        <div className="login__marca">
-          <Fumaca className="marca__fumaca" />
-          <Marca tamanho="g" />
-        </div>
+        <MarcaFumegante />
       </div>
     )
   if (!session) return <Login erroInicial={erroEntrada} />

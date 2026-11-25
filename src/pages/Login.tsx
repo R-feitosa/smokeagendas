@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { Fumaca } from '../components/Fumaca'
-import { Marca } from '../components/Marca'
+import { MarcaFumegante } from '../components/MarcaFumegante'
 import { mensagemErroLogin, supabase } from '../lib/supabase'
 
 export function Login({ erroInicial = null }: { erroInicial?: string | null }) {
@@ -20,10 +19,7 @@ export function Login({ erroInicial = null }: { erroInicial?: string | null }) {
 
   return (
     <div className="login">
-      <div className="login__marca">
-        <Fumaca className="marca__fumaca" />
-        <Marca tamanho="g" />
-      </div>
+      <MarcaFumegante />
       <form className="form login__cartao" onSubmit={entrar}>
         <h1>Agenda por Voz</h1>
         <p className="sub">Entre com a conta do escritório.</p>

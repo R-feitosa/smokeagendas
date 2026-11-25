@@ -71,7 +71,6 @@ h3 { font-size: 1rem; margin-top: 20px; }
 .recorder__botao:active:not(:disabled) { transform: scale(.95); }
 .recorder__botao:disabled { opacity: .6; }
 .recorder__botao:focus-visible { outline: 3px solid var(--cor); outline-offset: 4px; }
-.recorder__botao--on { background: #dc2626; box-shadow: 0 8px 24px rgba(220, 38, 38, .35); }
 .recorder__halo { --nivel: 0; position: absolute; inset: 0; border-radius: 50%; background: rgba(220, 38, 38, .22); opacity: 0; transform: scale(calc(1 + var(--nivel) * .7)); transition: transform .08s linear; }
 .recorder__halo--on { opacity: 1; }
 .recorder__status { min-height: 52px; }
@@ -128,29 +127,29 @@ h3 { font-size: 1rem; margin-top: 20px; }
 .marca--g .marca__nome { font-size: 2.5rem; }
 .marca--g .marca__sub { font-size: .74rem; margin-top: 6px; }
 
-/* fumaça */
-.fumaca { position: absolute; pointer-events: none; overflow: visible; }
-.fumaca__fio { fill: none; stroke: rgba(255, 255, 255, .5); stroke-width: 5; stroke-linecap: round; opacity: 0;
-  transform-box: fill-box; transform-origin: 50% 100%; animation: fumaca-sobe 6.5s ease-in infinite; }
-.fumaca--escura .fumaca__fio { stroke: rgba(60, 70, 110, .5); stroke-width: 7; }
-.fumaca__fio--1 { animation-duration: 7.5s; animation-delay: 2.2s; }
-.fumaca__fio--2 { animation-duration: 6s; animation-delay: 4.1s; stroke-width: 4; }
-@keyframes fumaca-sobe {
-  0% { opacity: 0; transform: translateY(14%) scaleY(.85) skewX(0deg); }
-  25% { opacity: .7; }
-  70% { opacity: .28; }
-  100% { opacity: 0; transform: translateY(-18%) scaleY(1.12) skewX(7deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .fumaca__fio { animation: none; opacity: .22; }
-}
-.topo__fumaca { bottom: -18px; width: 54px; height: 120px; }
-.topo__fumaca--a { left: 6%; }
-.topo__fumaca--b { right: 5%; transform: scaleX(-1); }
+/* fumaça (canvas) */
+.fumaca { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .topo .marca { position: relative; }
-/* sai do alto do prédio do logo grande */
-.marca__fumaca { left: 50%; bottom: calc(100% - 26px); width: 70px; height: 130px; transform: translateX(-62%); }
-.recorder__fumaca { left: 50%; bottom: 84%; width: 70px; height: 96px; transform: translateX(-50%); }
+.topo { cursor: pointer; -webkit-user-select: none; user-select: none; }
+.login__marca { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+/* a área da fumaça do login/abertura vai bem acima do logo */
+.marca__fumaca { inset: auto; left: 50%; bottom: 0; width: min(360px, 100vw); height: calc(100% + 38vh); transform: translateX(-50%); }
+.recorder__fumaca { inset: auto; left: 50%; bottom: 0; width: min(360px, calc(100vw - 8px)); height: 330px; transform: translateX(-50%); }
+.recorder__palco > .recorder__botao { z-index: 1; }
+
+.processando__palco { position: relative; width: 36px; height: 36px; }
+.processando__fumaca { inset: auto; left: 50%; bottom: 0; width: min(360px, calc(100vw - 8px)); height: 300px; transform: translateX(-50%); }
+.processando .spinner { position: relative; z-index: 1; }
+
+/* brasa acesa enquanto grava */
+.recorder__botao--on { background: radial-gradient(circle at 50% 38%, #ffe08a 0%, #ff9a2e 26%, #e8461e 58%, #8f1d0f 100%); box-shadow: 0 0 26px 6px rgba(255, 128, 32, .55); animation: brasa 1.1s ease-in-out infinite; }
+.recorder__halo { background: rgba(255, 120, 30, .25); }
+@keyframes brasa {
+  0%, 100% { box-shadow: 0 0 22px 4px rgba(255, 120, 30, .5), 0 8px 24px rgba(200, 40, 20, .35); filter: brightness(1); }
+  45% { box-shadow: 0 0 40px 12px rgba(255, 160, 40, .7), 0 8px 24px rgba(200, 40, 20, .4); filter: brightness(1.12); }
+  70% { filter: brightness(.96); }
+}
+@media (prefers-reduced-motion: reduce) { .recorder__botao--on { animation: none; } }
 
 /* faixa do topo */
 .topo { position: relative; overflow: hidden; background: var(--degrade); padding: calc(10px + env(safe-area-inset-top)) 16px 10px; display: flex; justify-content: center; box-shadow: 0 1px 0 rgba(0, 0, 0, .08); }

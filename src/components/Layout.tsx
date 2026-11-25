@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { Fumaca } from './Fumaca'
-import { Marca } from './Marca'
+import { useRef } from 'react'
+import { Fumaca, type FumacaHandle } from './Fumaca'
+import { CHAMINE, Marca } from './Marca'
 import { IconeMic } from './Recorder'
 
 // ícones de traço, na cor do texto da aba (combinam com a marca, ao contrário dos emojis)
@@ -27,12 +28,13 @@ const IconeAjustes = () => (
 )
 
 export function Layout() {
+  const icone = useRef<SVGSVGElement>(null)
+  const fumaca = useRef<FumacaHandle>(null)
   return (
     <div className="app">
-      <header className="topo">
-        <Fumaca className="topo__fumaca topo__fumaca--a" />
-        <Fumaca className="topo__fumaca topo__fumaca--b" />
-        <Marca />
+      <header className="topo" onClick={() => fumaca.current?.rajada(10)}>
+        <Fumaca ref={fumaca} fonte={icone} ponto={CHAMINE} taxa={4.5} aneis={0.35} vento={46} escala={0.75} subida={0.22} />
+        <Marca refIcone={icone} />
       </header>
       <main className="app__conteudo">
         <Outlet />
