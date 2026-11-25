@@ -3,6 +3,7 @@ import { Layout } from './components/Layout'
 import { MarcaFumegante } from './components/MarcaFumegante'
 import { useSession } from './hooks/useSession'
 import { Ajustes } from './pages/Ajustes'
+import { Apartamentos } from './pages/Apartamentos'
 import { Gravar } from './pages/Gravar'
 import { Hoje } from './pages/Hoje'
 import { Login } from './pages/Login'
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="semana" element={<Navigate to="/calendario" replace />} />
         <Route path="gravar" element={<Gravar />} />
         <Route path="novo" element={<Navigate to="/gravar" replace />} />
+        <Route path="apartamentos" element={<Apartamentos />} />
         <Route path="ajustes" element={<Ajustes />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

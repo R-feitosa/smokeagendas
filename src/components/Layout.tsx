@@ -20,6 +20,12 @@ const IconeCalendario = () => (
     <path d="M3.5 9.5h17M8 3v4M16 3v4M8 13h.01M12 13h.01M16 13h.01M8 16.5h.01M12 16.5h.01" />
   </svg>
 )
+const IconeApartamentos = () => (
+  <svg {...tracos}>
+    <path d="M4.5 20.5V6l7.5-2.5L19.5 6v14.5M3 20.5h18M10 20.5v-3.5h4v3.5" />
+    <path d="M8.5 9h.01M12 9h.01M15.5 9h.01M8.5 12.5h.01M12 12.5h.01M15.5 12.5h.01" strokeWidth={2.4} />
+  </svg>
+)
 const IconeAjustes = () => (
   <svg {...tracos}>
     <path d="M4 7h10M18 7h2M4 17h4M12 17h8" />
@@ -71,6 +77,12 @@ export function Layout() {
             <IconeMic tamanho={22} />
           </span>
           Gravar
+        </NavLink>
+        <NavLink to="/apartamentos">
+          <span>
+            <IconeApartamentos />
+          </span>
+          Apartamentos
         </NavLink>
         <NavLink to="/ajustes">
           <span>
