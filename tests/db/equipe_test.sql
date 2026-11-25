@@ -52,6 +52,12 @@ reset role;
 insert into _resultado select 'Bia não altera a equipe do Saulo',
   (select equipe = array['Toyota', 'Aristides'] from perfis where nome = 'Saulo');
 
+-- 0006: o lembrete vencido sai com o nome do responsável (para o título do push)
+insert into eventos (user_id, titulo, inicio, lembrar_min_antes, responsavel)
+  select id, 'visita vencida', now() + interval '10 minutes', 30, 'Aristides' from perfis where nome = 'Saulo';
+insert into _resultado select 'lembrete reivindicado traz o responsável',
+  (select responsavel = 'Aristides' from reivindicar_lembretes(50) where titulo = 'visita vencida');
+
 \echo
 select case when ok then 'PASSOU' else 'FALHOU' end as resultado, teste from _resultado;
 do $$ begin
