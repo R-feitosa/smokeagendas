@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ativarPush, desativarPush, ehIOS, estaInstalado, statusPush, testarNotificacao } from '../lib/push'
 import { tocarAlerta } from '../lib/som'
+import { salvarEquipe, useEquipe } from '../lib/equipe'
 import { entradaAutomatica, supabase } from '../lib/supabase'
 
 type Status = Awaited<ReturnType<typeof statusPush>>
@@ -9,6 +10,9 @@ export function Ajustes() {
   const [status, setStatus] = useState<Status>('inativo')
   const [erro, setErro] = useState<string | null>(null)
   const precisaInstalar = ehIOS() && !estaInstalado()
+  const equipe = useEquipe()
+  const [textoEquipe, setTextoEquipe] = useState<string | null>(null)
+  const [msgEquipe, setMsgEquipe] = useState<string | null>(null)
 
   useEffect(() => {
     statusPush().then(setStatus)
@@ -91,6 +95,35 @@ export function Ajustes() {
           </details>
         </>
       )}
+
+      <h3>Minha equipe</h3>
+      <form
+        className="form"
+        onSubmit={async (e) => {
+          e.preventDefault()
+          try {
+            const salvos = await salvarEquipe((textoEquipe ?? equipe.join(', ')).split(','))
+            setTextoEquipe(null)
+            setMsgEquipe(salvos.length ? `Equipe salva: ${salvos.join(', ')}` : 'Equipe removida')
+          } catch {
+            setMsgEquipe('Não foi possível salvar a equipe')
+          }
+        }}
+      >
+        <label>
+          Nomes separados por vírgula (aparecem no filtro Minha | Equipe e em "De quem é")
+          <input
+            id="equipe"
+            value={textoEquipe ?? equipe.join(', ')}
+            onChange={(e) => setTextoEquipe(e.target.value)}
+            placeholder="Ex.: Toyota, Aristides"
+          />
+        </label>
+        <button className="btn btn--sec" disabled={textoEquipe === null}>
+          Salvar equipe
+        </button>
+        {msgEquipe && <p className="ok">{msgEquipe}</p>}
+      </form>
 
       {!entradaAutomatica && (
         <>

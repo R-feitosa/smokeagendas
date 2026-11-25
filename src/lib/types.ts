@@ -19,6 +19,8 @@ export type Evento = {
   /** série recorrente: mesma para todas as ocorrências */
   serie_id: string | null
   ocorrencia_n: number | null
+  /** null = do dono da conta; nome = membro da equipe */
+  responsavel: string | null
   /** repetição calculada (ainda não gravada no banco): só para exibir no calendário */
   prevista?: boolean
 }
@@ -30,6 +32,7 @@ export type Perfil = {
   fuso: string
   reenviar_a_cada_min: number
   max_reenvios: number
+  equipe: string[]
 }
 
 /** O que a IA devolve e o usuário confere antes de salvar */
@@ -41,4 +44,6 @@ export type Rascunho = {
   lembrar_min_antes: number
   recorrencia: Recorrencia
   transcricao: string | null
+  /** de quem é (equipe); null = do dono da conta */
+  responsavel?: string | null
 }

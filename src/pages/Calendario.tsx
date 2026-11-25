@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { EventCard } from '../components/EventCard'
+import { FiltroDono } from '../components/FiltroDono'
+import { useEquipe, useFiltroDono } from '../lib/equipe'
 import { concluirEvento, excluirEvento, listarEventos, listarPrevistas } from '../lib/api'
 import {
   chaveDia,
@@ -40,6 +42,8 @@ export function Calendario() {
   const [eventos, setEventos] = useState<Evento[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
+  const equipe = useEquipe()
+  const { filtro, setFiltro, aplicar } = useFiltroDono()
 
   function setModo(m: Modo) {
     setModoState(m)
@@ -78,14 +82,15 @@ export function Calendario() {
     carregar()
   }, [carregar])
 
+  const visiveis = useMemo(() => aplicar(eventos), [eventos, filtro]) // eslint-disable-line react-hooks/exhaustive-deps
   const porDia = useMemo(() => {
     const mapa = new Map<string, Evento[]>()
-    for (const e of eventos) {
+    for (const e of visiveis) {
       const k = chaveDia(new Date(e.inicio))
       mapa.set(k, [...(mapa.get(k) ?? []), e])
     }
     return mapa
-  }, [eventos])
+  }, [visiveis])
   const doDia = (d: Date) => porDia.get(chaveDia(d)) ?? []
 
   function navegar(sentido: 1 | -1) {
@@ -144,6 +149,8 @@ export function Calendario() {
           </button>
         ))}
       </div>
+
+      <FiltroDono filtro={filtro} onMudar={setFiltro} equipe={equipe} />
 
       <div className="cal__nav">
         <button type="button" className="cal__seta" onClick={() => navegar(-1)} aria-label="Período anterior">
@@ -219,7 +226,7 @@ export function Calendario() {
               </button>
             ))}
           </div>
-          {!carregando && eventos.length === 0 && <p className="vazio">Nada marcado nesta semana.</p>}
+          {!carregando && visiveis.length === 0 && <p className="vazio">Nada marcado nesta semana.</p>}
           {Array.from({ length: 7 }, (_, i) => somarDias(inicioDaSemana(dia), i))
             .filter((d) => doDia(d).length)
             .map((d) => (
@@ -233,7 +240,7 @@ export function Calendario() {
 
       {modo === 'dia' && (
         <>
-          {!carregando && eventos.length === 0 && <p className="vazio">Nada marcado neste dia.</p>}
+          {!carregando && visiveis.length === 0 && <p className="vazio">Nada marcado neste dia.</p>}
           {lista(doDia(dia))}
         </>
       )}

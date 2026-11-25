@@ -19,6 +19,7 @@ export function EventCard({ evento, onConcluir, onExcluir }: Props) {
     <li className={`card ${feito ? 'card--feito' : ''} ${evento.prevista ? 'card--prevista' : ''}`}>
       <div className="card__hora">{hora(evento.inicio)}</div>
       <div className="card__corpo">
+        {evento.responsavel && <span className="selo selo--pessoa">{evento.responsavel}</span>}
         <strong>{evento.titulo}</strong>
         {evento.descricao && <p>{evento.descricao}</p>}
         <small>

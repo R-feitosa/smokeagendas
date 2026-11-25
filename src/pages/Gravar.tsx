@@ -4,6 +4,7 @@ import { ConfirmEvento } from '../components/ConfirmEvento'
 import { Fumaca, type FumacaHandle } from '../components/Fumaca'
 import { Recorder } from '../components/Recorder'
 import { criarEvento, processarAudio } from '../lib/api'
+import { detectarResponsavel, useEquipe } from '../lib/equipe'
 import type { Rascunho } from '../lib/types'
 
 type Etapa = 'gravar' | 'processando' | 'confirmar'
@@ -22,6 +23,7 @@ export function Gravar() {
   const [rascunho, setRascunho] = useState<Rascunho | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
+  const equipe = useEquipe()
   const spinner = useRef<HTMLDivElement>(null)
   const fumaca = useRef<FumacaHandle>(null)
 
@@ -35,7 +37,8 @@ export function Gravar() {
     setAudio(blob)
     setEtapa('processando')
     try {
-      setRascunho(await processarAudio(blob))
+      const r = await processarAudio(blob)
+      setRascunho({ ...r, responsavel: detectarResponsavel(r.transcricao, equipe) })
       setEtapa('confirmar')
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro ao processar o áudio')

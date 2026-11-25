@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Rascunho, Recorrencia } from '../lib/types'
 import { deInput, paraInput, rotuloAntecedencia } from '../lib/datas'
+import { useEquipe } from '../lib/equipe'
 
 const ANTECEDENCIAS = [0, 5, 10, 15, 30, 60, 120, 1440]
 
@@ -23,6 +24,8 @@ export function ConfirmEvento({ rascunho, salvando, onSalvar, onDescartar }: Pro
   const [inicio, setInicio] = useState(paraInput(rascunho.inicio))
   const [antes, setAntes] = useState(rascunho.lembrar_min_antes)
   const [recorrencia, setRecorrencia] = useState<Recorrencia>(rascunho.recorrencia)
+  const [responsavel, setResponsavel] = useState<string>(rascunho.responsavel ?? '')
+  const equipe = useEquipe()
 
   return (
     <form
@@ -36,10 +39,25 @@ export function ConfirmEvento({ rascunho, salvando, onSalvar, onDescartar }: Pro
           inicio: deInput(inicio),
           lembrar_min_antes: antes,
           recorrencia,
+          responsavel: responsavel || null,
         })
       }}
     >
       {rascunho.transcricao && <blockquote className="transcricao">“{rascunho.transcricao}”</blockquote>}
+
+      {(equipe.length > 0 || responsavel) && (
+        <label>
+          De quem é
+          <select value={responsavel} onChange={(e) => setResponsavel(e.target.value)}>
+            <option value="">Meu</option>
+            {[...new Set([...equipe, ...(responsavel ? [responsavel] : [])])].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <label>
         Título

@@ -26,7 +26,7 @@ export async function listarEventos(de: Date, ate: Date): Promise<Evento[]> {
   return data as Evento[]
 }
 
-type Projecao = Pick<Evento, 'serie_id' | 'ocorrencia_n' | 'inicio' | 'fim' | 'titulo' | 'descricao' | 'lembrar_min_antes' | 'recorrencia'>
+type Projecao = Pick<Evento, 'serie_id' | 'ocorrencia_n' | 'inicio' | 'fim' | 'titulo' | 'descricao' | 'lembrar_min_antes' | 'recorrencia' | 'responsavel'>
 
 /**
  * Repetições futuras ainda não gravadas (o servidor grava só 7 dias à frente).
@@ -41,6 +41,7 @@ export async function listarPrevistas(de: Date, ate: Date): Promise<Evento[]> {
   }
   return (data as Projecao[]).map((p) => ({
     ...p,
+    responsavel: p.responsavel ?? null,
     id: `prevista-${p.serie_id}-${p.ocorrencia_n}`,
     user_id: '',
     adiar_ate: null,
@@ -61,6 +62,7 @@ export async function criarEvento(r: Rascunho): Promise<void> {
     lembrar_min_antes: r.lembrar_min_antes,
     recorrencia: r.recorrencia,
     transcricao: r.transcricao,
+    responsavel: r.responsavel ?? null,
   })
   if (error) throw error
 }
