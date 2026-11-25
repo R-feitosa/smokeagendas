@@ -9,8 +9,9 @@
     "preview": "vite preview --host",
     "typecheck:sw": "tsc -p tsconfig.sw.json --noEmit",
     "gen:vapid": "npx web-push generate-vapid-keys",
-    "test": "npm run test:fn && npm run test:db",
+    "test": "npm run test:fn && npm run test:front && npm run test:db",
     "test:fn": "cd supabase/functions && deno test --no-prompt",
+    "test:front": "node --test \"tests/front/*.test.ts\"",
     "check:fn": "cd supabase/functions && deno task check",
     "test:db": "tests/db/run.sh"
   },

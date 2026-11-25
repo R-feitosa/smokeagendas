@@ -2,6 +2,8 @@
 
 PWA para celular: a pessoa **grava um áudio**, a IA transforma em compromisso, ela **confere e salva**, e o app **avisa por notificação** na hora certa.
 
+A aba **Apartamentos** é o quadro de ocupação dos imóveis do escritório: cada unidade aparece como **vaga** ou **ocupada** e, com um toque, abre a escolha do status (ver [Apartamentos](#apartamentos-vago--ocupado)).
+
 ```
 Celular (PWA)                         Supabase
 ┌──────────────┐  áudio   ┌─────────────────────────┐
@@ -28,13 +30,15 @@ agenda-voz/
 │   │   ├── Layout.tsx            barra de abas inferior
 │   │   ├── Recorder.tsx          botão de gravar: medidor de volume, cronômetro, limite de 2 min, cancelar
 │   │   ├── ConfirmEvento.tsx     conferência do rascunho antes de salvar
+│   │   ├── UnidadeFolha.tsx      folha "Vago | Ocupado" que sobe ao tocar numa unidade (aba Apartamentos)
 │   │   └── EventCard.tsx
-│   ├── pages/                    Login · Hoje · Calendário (dia/semana/mês) · Gravar · Apartamentos (em construção) · Ajustes
+│   ├── pages/                    Login · Hoje · Calendário (dia/semana/mês) · Gravar · Apartamentos (quadro vago/ocupado) · Ajustes
 │   ├── hooks/
 │   │   ├── useSession.ts
 │   │   └── useAcaoNotificacao.ts "Concluir" / "Adiar" vindos da notificação
 │   └── lib/
 │       ├── supabase.ts · api.ts · types.ts · datas.ts
+│       ├── apartamentos.ts       regras de exibição da aba Apartamentos (resumo, fileiras, textos), sem rede
 │       ├── recorder.ts           MediaRecorder (webm no Chrome, mp4 no Safari) + erros de microfone traduzidos
 │       └── push.ts               inscrição Web Push
 └── supabase/
@@ -45,7 +49,8 @@ agenda-voz/
     │   ├── 0003_recorrencia_reenvio.sql  séries (7 dias gravados) + reenvio do lembrete
     │   ├── 0004_projecao_recorrencia.sql projetar_ocorrencias(): repetições futuras p/ o calendário
     │   ├── 0005_equipe.sql       perfis.equipe + eventos.responsavel (filtro Minha | Equipe)
-    │   └── 0006_responsavel_no_lembrete.sql  lembrete sai com o responsável (título do push)
+    │   ├── 0006_responsavel_no_lembrete.sql  lembrete sai com o responsável (título do push)
+    │   └── 0007_apartamentos.sql  prédios + unidades (vago|ocupado) + histórico; carga da planilha
     └── functions/
         ├── _shared/cors.ts
         ├── agenda-process-audio/ transcrever.ts → extrair.ts → validar.ts → rascunho
@@ -60,12 +65,12 @@ compartilháveis têm prefixo próprio:
 
 | Recurso | Nome |
 |---|---|
-| Schema | `agenda` (tabelas `perfis`, `eventos`, `push_subscriptions`) |
+| Schema | `agenda` (tabelas `perfis`, `eventos`, `push_subscriptions`; aba Apartamentos: `predios`, `unidades`, `unidades_historico`) |
 | Edge Functions | `agenda-process-audio`, `agenda-send-reminders` |
 | Job do pg_cron | `agenda-enviar-lembretes` |
 | Vault | `agenda_cron_secret` (gerado no banco), `agenda_project_url` |
 | Secrets das funções | `AGENDA_GROQ_API_KEY` (ou `AGENDA_OPENAI_API_KEY`), `AGENDA_VAPID_PUBLIC_KEY`, `AGENDA_VAPID_PRIVATE_KEY`, `AGENDA_VAPID_SUBJECT`, `AGENDA_ALLOWED_ORIGINS` |
-| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete` |
+| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`; **a aplicar:** `agenda_0007_apartamentos` |
 
 **Único ponto compartilhado: o login.** Os usuários ficam no Authentication do rf-ops,
 mas estar lá **não dá acesso** à agenda. Só usa o app quem for habilitado:
@@ -87,7 +92,8 @@ delete from agenda.perfis where id = (select id from auth.users where email = 'f
    cp .env.example .env
    ```
 2. **Banco** — já aplicado no rf-ops (`agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`).
-   Para um ambiente novo, rode `supabase/migrations/0001` → `0002` → `0003` → `0004` → `0005` → `0006` no SQL Editor e depois:
+   **Falta aplicar** a `0007_apartamentos.sql` (nome `agenda_0007_apartamentos`): até lá a aba Apartamentos avisa que a lista ainda não existe no servidor.
+   Para um ambiente novo, rode `supabase/migrations/0001` → `0002` → `0003` → `0004` → `0005` → `0006` → `0007` no SQL Editor e depois:
    ```sql
    select vault.create_secret('https://SEU_REF.supabase.co', 'agenda_project_url');
    ```
@@ -125,9 +131,47 @@ delete from agenda.perfis where id = (select id from auth.users where email = 'f
 | Recorrência | Ocorrências materializadas até 7 dias à frente; a ocorrência *k* = âncora + *k* × passo **no fuso da pessoa** (sem deriva: 31/01 mensal → 28/02 → 31/03; hora local mantida no horário de verão). Cancelar uma não encerra a série; `agenda.encerrar_serie(id)` encerra; trocar o passo inicia série nova e cancela as posteriores da antiga. O calendário mostra as repetições além dos 7 dias como "previstas", calculadas por `agenda.projetar_ocorrencias(de, ate)` com a mesma regra (só leitura, RLS) | `0003`, `0004` |
 | Reenvio até confirmar | Pendente após o 1º aviso → novo aviso a cada `perfis.reenviar_a_cada_min` (padrão 5), até `perfis.max_reenvios` (padrão 3; 0 desliga). Concluir para; "Adiar" e remarcar zeram a contagem. Cada envio tem `tag` própria (toca de novo) e o service worker fecha os avisos anteriores do mesmo compromisso | `0003`, `_shared/notificacao.ts`, `src/sw.ts` |
 | Agenda da equipe | O dono da conta registra também os compromissos da equipe: `eventos.responsavel` (null = dele; nome = membro de `perfis.equipe`). Filtro Tudo / Minha / Equipe em Hoje e Calendário; o nome dito na gravação já vem marcado na conferência. Acesso e avisos continuam só do dono; repetições herdam o responsável; no push o nome vem no título ("Toyota: Visita ao cliente") | `0005`, `0006`, `src/lib/equipe.ts`, `_shared/notificacao.ts` |
+| Apartamentos (vago/ocupado) | Dados **do escritório**, não por pessoa: todo usuário habilitado vê tudo e muda o status; login do rf-ops sem perfil na agenda não vê nem altera. O app só tem `SELECT` e `UPDATE` da coluna `status`; quem/quando mudou é carimbado por trigger (não dá para forjar) e cada mudança entra em `unidades_historico` (só leitura). Marcar o mesmo status de novo não conta como mudança. **Fonte da verdade do status = `agenda.unidades`**; o módulo imobiliário do RF OPS (`public.feitosa_imoveis`) não é lido nem escrito | `0007`, `src/pages/Apartamentos.tsx`, `src/lib/apartamentos.ts` |
 | Provedor de IA | Groq (padrão, via `AGENDA_GROQ_API_KEY`) ou OpenAI; mesma API. Modelos em lista de preferência com troca automática se um for descontinuado; fixáveis por `AGENDA_IA_MODELO_*` | `agenda-process-audio/provedor.ts` |
 | Data errada da IA | "Agora" vem do relógio do servidor com dia da semana; a resposta é validada (ISO com offset, limites) antes de voltar ao app | `process-audio/validar.ts` |
 | Acesso | Só usuários habilitados em `agenda.perfis` (FK); a função de áudio confere o usuário no Auth + perfil antes de gastar OpenAI (o gateway sozinho aceita a chave anon); RLS por `user_id`; `anon` sem acesso ao schema; funções do cron só para `service_role`; segredo do cron gerado e conferido no Vault; CORS por `AGENDA_ALLOWED_ORIGINS` | `0001`/`0002` |
+
+## Apartamentos (vago | ocupado)
+
+Resumo no topo (quantos vagos, ocupação geral e por prédio) e, abaixo, um quadro por prédio com uma
+placa por unidade. **Tocar na placa** abre a folha com *Vago* e *Ocupado*; escolher grava na hora,
+mostra "Desfazer" por alguns segundos e registra quem mudou e quando. O filtro *Todos · Vagos · Ocupados*
+mostra só o que interessa. A lista recarrega ao voltar para a tela (outra pessoa pode ter alterado).
+
+A carga inicial veio da planilha de 25/11/2026: 68 unidades (Feitosa 1 = 11, Feitosa 2 = 16,
+Feitosa 3 = 34, Connect Office = 7), 8 vagas. Unidades da carga não têm "vago desde": a data só
+passa a existir quando o status é alterado no app.
+
+Cadastro é administrativo (SQL Editor do rf-ops); o app não cria nem apaga unidade:
+
+```sql
+-- nova unidade (nasce "ocupado"; informe 'vago' se for o caso)
+insert into agenda.unidades (predio_id, numero, status)
+select id, '305', 'vago' from agenda.predios where nome = 'Feitosa 2';
+
+-- novo prédio (tipo_unidade: 'apartamento' ou 'sala'; ordem = posição na tela)
+insert into agenda.predios (nome, tipo_unidade, ordem) values ('Feitosa 4', 'apartamento', 5);
+
+-- renomear prédio / tirar unidade do quadro (apaga também o histórico dela)
+update agenda.predios set nome = 'Connect Office' where nome = 'Connect';
+delete from agenda.unidades where numero = '305' and predio_id = (select id from agenda.predios where nome = 'Feitosa 2');
+
+-- o que está vago e há quantos dias (null = desde antes do app)
+select p.nome, u.numero, (now() - u.status_desde) as vago_ha
+  from agenda.unidades u join agenda.predios p on p.id = u.predio_id
+ where u.status = 'vago' order by p.ordem, u.numero::int;
+
+-- histórico de uma unidade
+select h.alterado_em, h.status_anterior, h.status_novo, h.alterado_por_nome
+  from agenda.unidades_historico h join agenda.unidades u on u.id = h.unidade_id
+  join agenda.predios p on p.id = u.predio_id
+ where p.nome = 'Feitosa 2' and u.numero = '304' order by h.alterado_em desc;
+```
 
 ## Diagnóstico em produção
 
@@ -147,7 +191,8 @@ select status_code, content::jsonb from net._http_response where id = <request_i
 
 ```bash
 npm run test:fn    # Deno: datas/fuso e validação do rascunho
-npm run test:db    # Postgres local: isolamento/RLS, fila de lembretes, recorrência, reenvio, projeção, equipe
+npm run test:front # Node 22.18+ (roda TypeScript direto): regras de exibição da aba Apartamentos
+npm run test:db    # Postgres local: isolamento/RLS, fila de lembretes, recorrência, reenvio, projeção, equipe, apartamentos
 ```
 
 `test:db` precisa de um Postgres acessível (`PGHOST`, `PGPORT`, `PGUSER`); ele cria e apaga um banco
@@ -168,4 +213,8 @@ temporário e usa `tests/db/_shim_supabase.sql` para imitar `auth.users`/`auth.u
 - [ ] Exportar `.ics` / sincronizar com Google Agenda
 - [x] Reenvio de lembrete até confirmação
 - [x] Testes automatizados do backend (funções puras + banco)
-- [ ] Testes do front
+- [x] Aba Apartamentos: quadro vago/ocupado com troca por toque
+- [ ] Apartamentos: histórico e tempo de vacância na tela (os dados já são gravados)
+- [ ] Apartamentos: cadastrar prédio/unidade pelo app
+- [ ] Apartamentos: decidir a integração com o módulo imobiliário do RF OPS (hoje são fontes separadas)
+- [ ] Testes do front (por enquanto só a lógica da aba Apartamentos; telas ainda não)

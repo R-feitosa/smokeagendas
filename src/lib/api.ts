@@ -1,5 +1,6 @@
+import { ordenarUnidades } from './apartamentos'
 import { supabase } from './supabase'
-import type { Evento, Rascunho } from './types'
+import type { Evento, Predio, Rascunho, StatusUnidade, Unidade } from './types'
 
 /** Envia o áudio para a Edge Function e recebe o rascunho (nada é salvo ainda). */
 export async function processarAudio(blob: Blob): Promise<Rascunho> {
@@ -98,4 +99,38 @@ export async function encerrarSerie(eventoId: string): Promise<number> {
   const { data, error } = await supabase.rpc('encerrar_serie', { p_evento_id: eventoId })
   if (error) throw error
   return data as number
+}
+
+// ---- aba Apartamentos ----
+
+const COLUNAS_UNIDADE = 'id, predio_id, numero, status, status_desde, atualizado_em, atualizado_por_nome'
+
+/** Prédios (na ordem cadastrada) com as unidades em ordem de porta. Dados do escritório: todos os habilitados veem o mesmo. */
+export async function listarPredios(): Promise<Predio[]> {
+  const [predios, unidades] = await Promise.all([
+    supabase.from('predios').select('id, nome, tipo_unidade, ordem').order('ordem').order('nome'),
+    supabase.from('unidades').select(COLUNAS_UNIDADE),
+  ])
+  if (predios.error) throw predios.error
+  if (unidades.error) throw unidades.error
+
+  const porPredio = new Map<string, Unidade[]>()
+  for (const u of unidades.data as Unidade[]) porPredio.set(u.predio_id, [...(porPredio.get(u.predio_id) ?? []), u])
+  return (predios.data as Omit<Predio, 'unidades'>[]).map((p) => ({ ...p, unidades: ordenarUnidades(porPredio.get(p.id) ?? []) }))
+}
+
+/**
+ * Marca a unidade como vaga ou ocupada e devolve a linha já carimbada pelo banco
+ * (desde quando / por quem). Falha se a unidade não existir ou o usuário não for habilitado.
+ */
+export async function mudarStatusUnidade(id: string, status: StatusUnidade): Promise<Unidade> {
+  const { data, error } = await supabase.from('unidades').update({ status }).eq('id', id).select(COLUNAS_UNIDADE).single()
+  if (error) throw error
+  return data as Unidade
+}
+
+/** true quando o servidor ainda não tem as tabelas da aba (migration 0007 não aplicada) */
+export function semTabelasDeApartamentos(erro: unknown): boolean {
+  const codigo = (erro as { code?: string } | null)?.code
+  return codigo === 'PGRST205' || codigo === '42P01'
 }

@@ -35,6 +35,32 @@ export type Perfil = {
   equipe: string[]
 }
 
+// ---- aba Apartamentos (dados do escritório, compartilhados entre os usuários habilitados) ----
+
+export type StatusUnidade = 'vago' | 'ocupado'
+
+/** Apartamento ou sala (agenda.unidades) */
+export type Unidade = {
+  id: string
+  predio_id: string
+  /** como está na porta: "304", "12" */
+  numero: string
+  status: StatusUnidade
+  /** início do status atual; null = não se sabe (veio da carga inicial) */
+  status_desde: string | null
+  atualizado_em: string | null
+  atualizado_por_nome: string | null
+}
+
+/** Prédio com as suas unidades (agenda.predios) */
+export type Predio = {
+  id: string
+  nome: string
+  tipo_unidade: 'apartamento' | 'sala'
+  ordem: number
+  unidades: Unidade[]
+}
+
 /** O que a IA devolve e o usuário confere antes de salvar */
 export type Rascunho = {
   titulo: string

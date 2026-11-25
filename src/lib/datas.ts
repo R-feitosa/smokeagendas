@@ -55,6 +55,19 @@ export function rotuloDia(d: Date): string {
   return dataPorExtenso(d)
 }
 
+/** "25/11/2026" no fuso do aparelho */
+export function dataCurta(d: Date): string {
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+/** Há quanto tempo, em dias de calendário: "hoje", "ontem", "há 12 dias" */
+export function tempoDesde(d: Date, agora = new Date()): string {
+  const dias = Math.round((inicioDoDia(agora).getTime() - inicioDoDia(d).getTime()) / 86_400_000)
+  if (dias <= 0) return 'hoje'
+  if (dias === 1) return 'ontem'
+  return `há ${dias} dias`
+}
+
 // ---- calendário (sempre no fuso do aparelho; semana começa no domingo, como no calendário brasileiro) ----
 
 export function mesmoDia(a: Date, b: Date): boolean {

@@ -105,10 +105,98 @@ h3 { font-size: 1rem; margin-top: 20px; }
 .filtro-dono__quem { font-size: .8rem; color: var(--suave); }
 .selo--pessoa { margin: 0 0 4px; background: #fff4e6; color: #b45309; }
 
-/* em breve */
-.em-breve { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; margin-top: 48px; color: var(--cor); }
-.em-breve__titulo { margin: 8px 0 0; font-weight: 700; font-size: 1.1rem; color: var(--texto); }
-.em-breve .vazio { margin: 0; max-width: 260px; }
+/* apartamentos: resumo (indicadores + ocupação por prédio) */
+/* cores dos dois status, conferidas no validador de paleta (daltonismo: ΔE 38,5; faixa de luminosidade ok) */
+.aptos { --ocupado: #3350b0; --vago: #f2a21e; --vago-claro: #ffdf9e; --vago-fundo: #fff4e6; --vago-texto: #b45309; --placa: #dfe5f4; }
+.aptos__marca { display: inline-block; flex: none; width: 10px; height: 10px; border-radius: 3px; }
+.aptos__marca--vago { background: var(--vago); }
+.aptos__marca--ocupado { background: var(--ocupado); }
+.aptos__resumo { background: #fff; border: 1px solid var(--borda); border-radius: 16px; padding: 16px; }
+.aptos__kpis { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.aptos__heroi { margin: 0; display: flex; flex-direction: column; }
+.aptos__rotulo, .aptos__lado dt { display: flex; align-items: center; gap: 6px; font-size: .8rem; font-weight: 600; color: var(--suave); }
+.aptos__numero { margin: 2px 0; font-size: 3.6rem; font-weight: 700; line-height: 1; letter-spacing: -.03em; }
+.aptos__de { font-size: .85rem; color: var(--suave); }
+.aptos__lado { margin: 0; display: grid; gap: 10px; }
+.aptos__lado dt { justify-content: flex-end; }
+.aptos__lado dd { margin: 0; text-align: right; font-size: 1.45rem; font-weight: 700; line-height: 1.15; }
+.aptos__medidores { list-style: none; margin: 14px 0 0; padding: 10px 0 0; border-top: 1px solid var(--borda); display: flex; flex-direction: column; }
+.aptos__medidor { font: inherit; width: 100%; min-height: 36px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--texto); text-align: left; display: grid; grid-template-columns: minmax(0, 7.4rem) 1fr 3rem; align-items: center; gap: 10px; }
+.aptos__medidor:focus-visible { outline: 2px solid var(--cor); outline-offset: 2px; }
+.aptos__medidor-nome { font-size: .9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* barra fina em duas partes (ocupados | vagos), com 2px do fundo entre elas */
+.aptos__trilho { display: flex; gap: 2px; height: 8px; border-radius: 99px; overflow: hidden; transform-origin: left; animation: aptos-enche .7s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--i) * 70ms + 150ms); }
+.aptos__trilho:empty { background: var(--cor-clara); }
+.aptos__parte { flex: 1 1 0; min-width: 4px; }
+.aptos__parte--ocupado { background: var(--ocupado); }
+.aptos__parte--vago { background: var(--vago); }
+.aptos__medidor-valor { text-align: right; font-size: .85rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.aptos__medidor-valor small { font-size: 1em; font-weight: 500; color: var(--suave); }
+.aptos__filtro { margin: 14px 0; }
+.aptos__filtro small { font-size: .8em; opacity: .65; }
+
+/* apartamentos: quadro — cada prédio com o telhado da marca e uma placa por unidade */
+.aptos__quadro { display: flex; flex-direction: column; gap: 18px; }
+.aptos__predio { position: relative; scroll-margin-top: 12px; animation: aptos-sobe .5s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--i) * 80ms + 80ms); }
+.aptos__predio--fumaca { z-index: 2; }
+.aptos__telhado { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 24px 14px 11px; background: var(--degrade); color: var(--marca-branco); clip-path: polygon(0 14px, 64% 0, 100% 11px, 100% 100%, 0 100%); }
+.aptos__nome { margin: 0; font-family: 'Cinzel', 'Trajan Pro', Georgia, serif; font-size: 1.08rem; font-weight: 600; line-height: 1.1; letter-spacing: .06em; text-transform: uppercase; }
+.aptos__conta { margin: 3px 0 0; font-size: .78rem; opacity: .82; }
+.aptos__selo { flex: none; padding: 4px 10px; border: 1px solid rgba(255, 255, 255, .28); border-radius: 999px; font-size: .74rem; font-weight: 700; white-space: nowrap; color: rgba(255, 255, 255, .86); }
+.aptos__selo--vago { border-color: transparent; background: var(--vago-claro); color: var(--cor-escura); }
+.aptos__andares { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: #fff; border: 1px solid var(--borda); border-top: 0; border-radius: 0 0 16px 16px; box-shadow: 0 12px 24px -20px rgba(18, 27, 69, .45); }
+.aptos__fileira { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.aptos__nada { margin: 4px 2px; font-size: .9rem; color: var(--suave); }
+.aptos__placa { position: relative; display: grid; min-height: 56px; padding: 0; border: 0; border-radius: 10px; background: none; font: inherit; }
+/* cascata só na primeira carga: trocar o filtro responde na hora */
+.aptos__quadro--entrando .aptos__placa { animation: aptos-sobe .42s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--i) * 14ms + 180ms); }
+.aptos__placa:focus-visible { outline: 2px solid var(--cor); outline-offset: 2px; }
+.aptos__placa--fumaca { z-index: 3; }
+.aptos__face { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: inherit; background: var(--placa); color: var(--cor); box-shadow: inset 0 -3px 0 rgba(34, 53, 122, .13); transition: transform .12s; }
+.aptos__placa:active .aptos__face { transform: scale(.94); }
+.aptos__porta { font-family: 'Cinzel', 'Trajan Pro', Georgia, serif; font-size: 1.12rem; font-weight: 600; line-height: 1; letter-spacing: .02em; }
+.aptos__placa--vago .aptos__face { background: linear-gradient(180deg, var(--vago-claro), var(--vago)); color: var(--cor-escura); box-shadow: inset 0 -3px 0 rgba(146, 64, 14, .3), 0 6px 14px -6px rgba(217, 119, 6, .75); }
+.aptos__etiqueta { font-size: .6rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.aptos__face--mudou { animation: aptos-troca .5s cubic-bezier(.3, 1.4, .4, 1); }
+.aptos__aviso { position: fixed; z-index: 4; left: 50%; bottom: calc(var(--tab-h) + 16px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(calc(100% - 24px), 440px); min-height: 48px; padding: 6px 6px 6px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-radius: 14px; background: var(--cor-escura); color: #fff; font-size: .9rem; box-shadow: 0 10px 28px rgba(18, 27, 69, .35); animation: aptos-aviso .28s cubic-bezier(.2, .9, .25, 1); }
+.aptos__aviso button { flex: none; min-height: 36px; padding: 0 12px; border: 0; border-radius: 10px; background: rgba(255, 255, 255, .12); color: var(--vago-claro); font: inherit; font-weight: 700; }
+@media (min-width: 600px) { .aptos__quadro { display: block; columns: 2; column-gap: 16px; } .aptos__predio { break-inside: avoid; margin-bottom: 18px; } }
+@keyframes aptos-sobe { from { opacity: 0; transform: translateY(10px); } }
+@keyframes aptos-enche { from { transform: scaleX(0); } }
+@keyframes aptos-troca { 0% { opacity: .2; transform: scale(.7); } 60% { opacity: 1; transform: scale(1.08); } 100% { transform: scale(1); } }
+@keyframes aptos-aviso { from { opacity: 0; transform: translate(-50%, 12px); } }
+
+/* folha que sobe do rodapé (escolha Vago | Ocupado) */
+.folha { position: fixed; inset: auto 0 0 0; width: 100%; max-width: 640px; max-height: 90dvh; margin: 0 auto; padding: 0; border: 0; border-radius: 22px 22px 0 0; background: #fff; color: var(--texto); box-shadow: 0 -16px 48px rgba(18, 27, 69, .3); overflow: auto; animation: folha-sobe .34s cubic-bezier(.2, .9, .25, 1); }
+.folha::backdrop { background: rgba(18, 27, 69, .5); animation: folha-fundo .25s ease-out; }
+.folha--saindo { animation: folha-desce .19s ease-in forwards; }
+.folha--saindo::backdrop { animation: folha-fundo .19s ease-in reverse forwards; }
+.folha__corpo { position: relative; padding: 10px 18px calc(18px + env(safe-area-inset-bottom)); }
+.folha__alca { display: block; width: 38px; height: 4px; margin: 0 auto 14px; border-radius: 99px; background: var(--borda); }
+.folha__predio { margin: 0; font-family: 'Cinzel', 'Trajan Pro', Georgia, serif; font-size: .8rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--cor); }
+.folha__titulo { margin: 2px 0 6px; font-size: 1.7rem; line-height: 1.1; }
+.folha__status { margin: 0 0 16px; font-size: .9rem; line-height: 1.4; color: var(--suave); }
+.folha__status strong { color: var(--texto); }
+.folha__status .aptos__marca { margin-right: 6px; }
+.folha__rodape { margin: 14px 0 0; font-size: .8rem; color: var(--suave); }
+.folha__opcoes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.folha__opcao { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 104px; padding: 12px 14px; border: 1.5px solid var(--borda); border-radius: 16px; background: #fff; color: var(--texto); font: inherit; text-align: left; transition: transform .12s, border-color .15s, background .15s; }
+.folha__opcao svg { margin-bottom: 8px; }
+.folha__opcao strong { font-size: 1.08rem; }
+.folha__opcao small { font-size: .78rem; color: var(--suave); }
+.folha__opcao:active:not(:disabled) { transform: scale(.97); }
+.folha__opcao:disabled { opacity: .6; }
+.folha__opcao:focus-visible, .folha__fechar:focus-visible { outline: 2px solid var(--cor); outline-offset: 2px; }
+.folha__opcao--vago svg { color: var(--vago-texto); }
+.folha__opcao--vago[aria-pressed="true"] { border-color: var(--vago); background: var(--vago-fundo); }
+.folha__opcao--ocupado svg { color: var(--cor); }
+.folha__opcao--ocupado[aria-pressed="true"] { border-color: var(--cor); background: var(--cor-clara); }
+.folha__fechar { position: absolute; top: 20px; right: 14px; width: 36px; height: 36px; border: 1px solid var(--borda); border-radius: 10px; background: #fff; color: var(--texto); font-size: 1rem; }
+@media (hover: hover) { .aptos__placa:hover .aptos__face { filter: brightness(.96); } .aptos__medidor:hover .aptos__medidor-nome { text-decoration: underline; } .folha__opcao:hover:not(:disabled):not([aria-pressed="true"]) { border-color: #b4bfdc; } }
+@keyframes folha-sobe { from { transform: translateY(100%); } }
+@keyframes folha-desce { to { transform: translateY(100%); } }
+@keyframes folha-fundo { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .aptos__predio, .aptos__quadro--entrando .aptos__placa, .aptos__trilho, .aptos__face--mudou, .aptos__aviso, .folha, .folha::backdrop { animation: none; } }
 
 /* calendário */
 .segmentado { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--cor-clara); border-radius: 12px; padding: 4px; gap: 4px; margin: 8px 0 12px; }
@@ -158,6 +246,8 @@ h3 { font-size: 1rem; margin-top: 20px; }
 
 .processando__palco { position: relative; width: 36px; height: 36px; }
 .processando__fumaca { inset: auto; left: 50%; bottom: 0; width: min(360px, calc(100vw - 8px)); height: 300px; transform: translateX(-50%); }
+/* baforada da placa que acabou de vagar (aba Apartamentos) */
+.aptos__fumaca { inset: auto; left: 50%; bottom: 0; width: 230px; height: 270px; transform: translateX(-50%); }
 .processando .spinner { position: relative; z-index: 1; }
 
 /* brasa acesa enquanto grava */
