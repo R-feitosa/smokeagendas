@@ -11,6 +11,8 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
+      // inclui as fontes da marca no cache offline
+      injectManifest: { globPatterns: ['**/*.{js,css,html,png,svg,ico,webmanifest,woff2}'] },
       injectRegister: 'auto',
       manifest: {
         name: 'Agenda por Voz',
