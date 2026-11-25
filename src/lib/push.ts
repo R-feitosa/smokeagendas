@@ -74,3 +74,18 @@ export async function desativarPush(): Promise<void> {
   await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
   await sub.unsubscribe()
 }
+
+/** Mostra agora uma notificação igual à do lembrete, para conferir som/vibração do aparelho. */
+export async function testarNotificacao(): Promise<void> {
+  const reg = await navigator.serviceWorker.ready
+  await reg.showNotification('Teste da Agenda por Voz', {
+    body: 'Se apareceu sem som, ajuste as notificações do app no celular (passo a passo em Ajustes).',
+    tag: `teste:${Date.now()}`,
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    silent: false,
+    // @ts-expect-error vibrate/renotify existem em runtime, faltam na tipagem do lib DOM
+    vibrate: [400, 150, 400, 150, 700],
+    renotify: true,
+  })
+}

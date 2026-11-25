@@ -21,6 +21,21 @@ type PushPayload = {
   url?: string
 }
 
+// Opções que pedem alerta sonoro/vibração ao sistema. A tipagem do lib "WebWorker" não traz
+// vibrate/renotify/actions, mas os navegadores aceitam em runtime.
+type OpcoesNotificacao = NotificationOptions & {
+  vibrate?: number[]
+  renotify?: boolean
+  actions?: { action: string; title: string }[]
+}
+const ALERTA = { silent: false, renotify: true, vibrate: [400, 150, 400, 150, 700] }
+
+/** Se o app estiver aberto, ele toca o alarme sonoro próprio (ver src/lib/som.ts). */
+async function avisarAppAberto(titulo: string): Promise<void> {
+  const janelas = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  for (const j of janelas) j.postMessage({ tipo: 'lembrete', titulo })
+}
+
 /** Fecha os avisos já exibidos deste compromisso (reenvios não se acumulam). */
 async function fecharAvisosDoEvento(eventId?: string): Promise<void> {
   if (!eventId) return
@@ -35,21 +50,23 @@ async function fecharAvisosDoEvento(eventId?: string): Promise<void> {
 self.addEventListener('push', (event) => {
   const data: PushPayload = event.data?.json() ?? {}
   event.waitUntil(
-    fecharAvisosDoEvento(data.eventId).then(() =>
-      self.registration.showNotification(data.title ?? 'Lembrete', {
-        body: data.body,
-        tag: data.tag,
-        icon: '/icons/icon-192.png',
-        badge: '/icons/icon-192.png',
-        requireInteraction: true,
-        data: { url: data.url ?? '/', eventId: data.eventId },
-        // @ts-expect-error `actions` existe em runtime, mas falta na tipagem do lib "WebWorker"
-        actions: [
-          { action: 'concluir', title: 'Concluir' },
-          { action: 'adiar', title: 'Adiar 10 min' },
-        ],
-      }),
-    ),
+    fecharAvisosDoEvento(data.eventId)
+      .then(() =>
+        self.registration.showNotification(data.title ?? 'Lembrete', {
+          ...ALERTA,
+          body: data.body,
+          tag: data.tag,
+          icon: '/icons/icon-192.png',
+          badge: '/icons/icon-192.png',
+          requireInteraction: true,
+          data: { url: data.url ?? '/', eventId: data.eventId },
+          actions: [
+            { action: 'concluir', title: 'Concluir' },
+            { action: 'adiar', title: 'Adiar 10 min' },
+          ],
+        } as OpcoesNotificacao),
+      )
+      .then(() => avisarAppAberto(data.title ?? 'Lembrete')),
   )
 })
 

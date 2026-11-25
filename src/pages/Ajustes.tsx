@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { ativarPush, desativarPush, ehIOS, estaInstalado, statusPush } from '../lib/push'
+import { ativarPush, desativarPush, ehIOS, estaInstalado, statusPush, testarNotificacao } from '../lib/push'
+import { tocarAlerta } from '../lib/som'
 import { entradaAutomatica, supabase } from '../lib/supabase'
 
 type Status = Awaited<ReturnType<typeof statusPush>>
@@ -45,6 +46,51 @@ export function Ajustes() {
       )}
       {status === 'ativo' && <p className="ok">✓ Lembretes ativos neste aparelho</p>}
       {erro && <p className="erro">{erro}</p>}
+
+      {status === 'ativo' && (
+        <>
+          <h3>Som do lembrete</h3>
+          <div className="ajustes__acoes">
+            <button
+              className="btn"
+              onClick={() => testarNotificacao().catch(() => setErro('Não foi possível mostrar a notificação de teste'))}
+            >
+              Testar notificação
+            </button>
+            <button className="btn btn--sec" onClick={tocarAlerta}>
+              Ouvir alarme do app
+            </button>
+          </div>
+          <p className="sub">
+            Com o app aberto, o lembrete toca o alarme acima. Com o app fechado, quem decide o som é o celular:
+          </p>
+          <details className="ajuda">
+            <summary>Notificação chegou sem som no Android</summary>
+            <ol>
+              <li>
+                Toque e segure o ícone do app na tela inicial → <strong>Informações do app</strong> →{' '}
+                <strong>Notificações</strong>. Se usa pelo navegador, vá em <strong>Configurações do Android → Apps → Chrome →
+                Notificações</strong> e procure <strong>somkeagendas.vercel.app</strong> (em "Sites").
+              </li>
+              <li>
+                Na categoria do site, troque de <strong>Silenciosa</strong> para <strong>Alertar</strong> (ou "Padrão") e ligue
+                <strong> Som</strong> e <strong>Vibração</strong>. Em Xiaomi/Samsung, ative também "Pop-up"/"Mostrar na tela de bloqueio".
+              </li>
+              <li>Confira se o modo <strong>Não perturbe</strong> está desligado e toque em <strong>Testar notificação</strong>.</li>
+            </ol>
+          </details>
+          <details className="ajuda">
+            <summary>Notificação chegou sem som no iPhone</summary>
+            <ol>
+              <li>
+                <strong>Ajustes → Notificações → Agenda</strong> (o app instalado na tela de início) → ligue <strong>Sons</strong> e
+                <strong> Alertas</strong>.
+              </li>
+              <li>Confira o modo <strong>Foco/Não perturbe</strong> e a chave lateral de silencioso.</li>
+            </ol>
+          </details>
+        </>
+      )}
 
       {!entradaAutomatica && (
         <>

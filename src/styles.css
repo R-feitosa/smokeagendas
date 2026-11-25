@@ -91,6 +91,13 @@ h3 { font-size: 1rem; margin-top: 20px; }
 /* aba central de gravar em destaque */
 .tabbar a.tabbar__gravar span { display: grid; place-items: center; width: 44px; height: 44px; margin-top: -14px; border-radius: 50%; background: var(--degrade); color: #fff; box-shadow: 0 4px 12px rgba(34, 53, 122, .4); }
 
+/* ajustes: som */
+.ajustes__acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+.ajuda { background: #fff; border: 1px solid var(--borda); border-radius: 12px; padding: 10px 12px; margin-top: 8px; }
+.ajuda summary { font-weight: 600; cursor: pointer; }
+.ajuda ol { margin: 8px 0 2px; padding-left: 20px; color: var(--suave); display: flex; flex-direction: column; gap: 6px; }
+.ajuda strong { color: var(--texto); }
+
 /* calendário */
 .segmentado { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--cor-clara); border-radius: 12px; padding: 4px; gap: 4px; margin: 8px 0 12px; }
 .segmentado button { font: inherit; font-weight: 600; border: 0; background: transparent; color: var(--cor); padding: 8px 0; border-radius: 9px; }

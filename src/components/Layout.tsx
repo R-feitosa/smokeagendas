@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
+import { liberarSom, tocarAlerta } from '../lib/som'
 import { Fumaca, type FumacaHandle } from './Fumaca'
 import { CHAMINE, Marca } from './Marca'
 import { IconeMic } from './Recorder'
@@ -30,6 +31,19 @@ const IconeAjustes = () => (
 export function Layout() {
   const icone = useRef<SVGSVGElement>(null)
   const fumaca = useRef<FumacaHandle>(null)
+
+  useEffect(() => {
+    const aoMensagem = (e: MessageEvent) => {
+      if ((e.data as { tipo?: string })?.tipo === 'lembrete') tocarAlerta()
+    }
+    navigator.serviceWorker?.addEventListener('message', aoMensagem)
+    window.addEventListener('pointerdown', liberarSom, { once: true })
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', aoMensagem)
+      window.removeEventListener('pointerdown', liberarSom)
+    }
+  }, [])
+
   return (
     <div className="app">
       <header className="topo" onClick={() => fumaca.current?.rajada(10)}>
