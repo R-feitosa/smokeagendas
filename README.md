@@ -51,7 +51,8 @@ agenda-voz/
     │   ├── 0005_equipe.sql       perfis.equipe + eventos.responsavel (filtro Minha | Equipe)
     │   ├── 0006_responsavel_no_lembrete.sql  lembrete sai com o responsável (título do push)
     │   ├── 0007_apartamentos.sql  prédios + unidades (vago|ocupado) + histórico; carga da planilha
-    │   └── 0008_casas_temporada.sql  predios.categoria + 5 casas de temporada (1 unidade cada)
+    │   ├── 0008_casas_temporada.sql  predios.categoria + 5 casas de temporada (1 unidade cada)
+    │   └── 0009_casas_so_saulo.sql  só o Saulo muda o status das casas (predios.editavel_por + policy)
     └── functions/
         ├── _shared/cors.ts
         ├── agenda-process-audio/ transcrever.ts → extrair.ts → validar.ts → rascunho
@@ -71,7 +72,7 @@ compartilháveis têm prefixo próprio:
 | Job do pg_cron | `agenda-enviar-lembretes` |
 | Vault | `agenda_cron_secret` (gerado no banco), `agenda_project_url` |
 | Secrets das funções | `AGENDA_GROQ_API_KEY` (ou `AGENDA_OPENAI_API_KEY`), `AGENDA_VAPID_PUBLIC_KEY`, `AGENDA_VAPID_PRIVATE_KEY`, `AGENDA_VAPID_SUBJECT`, `AGENDA_ALLOWED_ORIGINS` |
-| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`, `agenda_0007_apartamentos`, `agenda_0008_casas_temporada` |
+| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`, `agenda_0007_apartamentos`, `agenda_0008_casas_temporada`, `agenda_0009_casas_so_saulo` |
 
 **Único ponto compartilhado: o login.** Os usuários ficam no Authentication do rf-ops,
 mas estar lá **não dá acesso** à agenda. Só usa o app quem for habilitado:
@@ -92,8 +93,8 @@ delete from agenda.perfis where id = (select id from auth.users where email = 'f
    npm install
    cp .env.example .env
    ```
-2. **Banco** — já aplicado no rf-ops (`agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`, `agenda_0007_apartamentos`, `agenda_0008_casas_temporada`).
-   Para um ambiente novo, rode `supabase/migrations/0001` → `0002` → `0003` → `0004` → `0005` → `0006` → `0007` → `0008` no SQL Editor e depois:
+2. **Banco** — já aplicado no rf-ops (`agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`, `agenda_0007_apartamentos`, `agenda_0008_casas_temporada`, `agenda_0009_casas_so_saulo`).
+   Para um ambiente novo, rode `supabase/migrations/0001` → `0002` → `0003` → `0004` → `0005` → `0006` → `0007` → `0008` → `0009` no SQL Editor (a 0009 exige um perfil chamado "Saulo") e depois:
    ```sql
    select vault.create_secret('https://SEU_REF.supabase.co', 'agenda_project_url');
    ```
@@ -161,7 +162,19 @@ no resumo de ocupação da locação. Cada uma é um `predios` com `categoria = 
 `tipo_unidade = 'imovel'` e uma única unidade (`numero = '1'`). Entraram como vagas. Por voz, basta o
 nome: *"a Casa da Serra está ocupada"* (também "Camocim", "Moradas", "Roneely", "Fortaleza").
 Nova casa: `insert into agenda.predios (nome, tipo_unidade, categoria, ordem) values ('Casa X', 'imovel', 'temporada', 106);`
-e depois a unidade `'1'` dela em `agenda.unidades`. Unidades da carga não têm "vago desde": a data só
+e depois a unidade `'1'` dela em `agenda.unidades`.
+
+**Quem altera as casas** (0009): todos veem; **só o Saulo** muda o status (`predios.editavel_por`, conferido
+na policy de UPDATE de `agenda.unidades`). Para outra pessoa, a folha mostra "Só Saulo altera…" e a voz
+não muda nada. Reaplicou a 0007? Reaplique a 0009 (a 0007 recria a policy sem a trava). Liberar uma casa
+para todos: `update agenda.predios set editavel_por = null, editavel_por_nome = null where nome = 'Casa X';`
+
+## Aba Hoje (painel do dia)
+
+Saudação com o nome do perfil, atalho **Gravar agora**, indicadores (compromissos de hoje com concluídos e
+atrasados, próximo compromisso, vagos da locação, casas de temporada ocupadas), acesso rápido
+(Calendário, Apartamentos, Casas de temporada, Ajustes) e a agenda de hoje com o filtro Tudo/Minha/Equipe.
+Os números dos imóveis vêm da mesma fonte da aba Apartamentos; se falharem, a agenda continua. Unidades da carga não têm "vago desde": a data só
 passa a existir quando o status é alterado no app.
 
 Cadastro é administrativo (SQL Editor do rf-ops); o app não cria nem apaga unidade:

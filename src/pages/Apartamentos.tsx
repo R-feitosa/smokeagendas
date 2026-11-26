@@ -104,6 +104,12 @@ export function Apartamentos() {
   }, [mudou])
 
   const temLista = !!predios?.length
+
+  // atalho do painel (/apartamentos#temporada): rola até as casas quando a lista chega
+  useEffect(() => {
+    if (!temLista || window.location.hash !== '#temporada') return
+    document.getElementById('temporada')?.scrollIntoView({ block: 'start' })
+  }, [temLista])
   useEffect(() => {
     if (!temLista) return
     const t = window.setTimeout(() => setEntrando(false), TEMPO_ENTRADA)
@@ -276,7 +282,7 @@ export function Apartamentos() {
           </div>
 
           {temporada.length > 0 && (
-            <section className="temporada" aria-labelledby="temporada-titulo">
+            <section className="temporada" id="temporada" aria-labelledby="temporada-titulo">
               <header className="temporada__topo">
                 <h3 className="temporada__titulo" id="temporada-titulo">
                   Casas de temporada

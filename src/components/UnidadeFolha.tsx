@@ -114,7 +114,7 @@ export function UnidadeFolha({ predio, unidade, onMudar, onFechar }: Props) {
                 type="button"
                 className={`folha__opcao folha__opcao--${status}`}
                 aria-pressed={atual}
-                disabled={salvando !== null}
+                disabled={salvando !== null || !predio.pode_alterar}
                 onClick={() => escolher(status)}
               >
                 <Icone />
@@ -125,6 +125,11 @@ export function UnidadeFolha({ predio, unidade, onMudar, onFechar }: Props) {
           })}
         </div>
 
+        {!predio.pode_alterar && (
+          <p className="folha__trava" role="note">
+            Só {predio.editavel_por_nome ?? 'o responsável'} altera o status {predio.categoria === 'temporada' ? 'desta casa' : 'deste prédio'}.
+          </p>
+        )}
         {erro && (
           <p className="erro" role="alert">
             {erro}

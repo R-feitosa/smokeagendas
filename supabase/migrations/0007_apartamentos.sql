@@ -145,6 +145,7 @@ create policy "unidades: habilitados leem" on agenda.unidades
   for select to authenticated
   using (exists (select 1 from agenda.perfis p where p.id = (select auth.uid())));
 
+-- ATENÇÃO: a 0009 substitui esta policy (casas de temporada só o Saulo). Reaplicou a 0007? Reaplique a 0009.
 drop policy if exists "unidades: habilitados mudam o status" on agenda.unidades;
 create policy "unidades: habilitados mudam o status" on agenda.unidades
   for update to authenticated

@@ -9,8 +9,12 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'ana@ex.com'),
   ('00000000-0000-0000-0000-00000000000b', 'bia@ex.com'),
   ('00000000-0000-0000-0000-00000000000c', 'ops@ex.com');  -- login do rf-ops, sem agenda
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000005a0', 'saulo@ex.com');
 select habilitar_usuario('ana@ex.com', 'Ana') \g /dev/null
 select habilitar_usuario('bia@ex.com', 'Bia') \g /dev/null
+select habilitar_usuario('saulo@ex.com', 'Saulo') \g /dev/null
+-- 0009 precisa do perfil Saulo: roda aqui, não no run.sh (os outros testes contam perfis)
+\i supabase/migrations/0009_casas_so_saulo.sql
 
 -- unidade usada nos testes: Feitosa 1 · 101 (começa ocupada)
 create temp table _u as
@@ -178,6 +182,7 @@ insert into _resultado select 'desabilitar alguém mantém o histórico com o no
 -- ---------- Idempotência: aplicar a 0007 de novo ----------
 \i supabase/migrations/0007_apartamentos.sql
 \i supabase/migrations/0008_casas_temporada.sql
+\i supabase/migrations/0009_casas_so_saulo.sql
 insert into _resultado select 'reaplicar não duplica prédios nem unidades',
   (select count(*) = 9 from predios) and (select count(*) = 73 from unidades);
 insert into _resultado select 'reaplicar não sobrescreve status alterado no app nem o histórico',
@@ -195,6 +200,35 @@ insert into _resultado select 'RLS ligado nas três tabelas',
 insert into _resultado select 'nenhum objeto criado em public',
   (select count(*) = 0 from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public')
   and (select count(*) = 0 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public');
+
+-- ---------- 0009: só o Saulo altera as casas de temporada ----------
+insert into _resultado select '0009: casas marcadas como do Saulo; prédios de locação livres',
+  (select bool_and(editavel_por = '00000000-0000-0000-0000-0000000005a0' and editavel_por_nome = 'Saulo') from predios where categoria = 'temporada')
+  and (select bool_and(editavel_por is null) from predios where categoria = 'locacao');
+create temp table _casa as select u.id from unidades u join predios p on p.id = u.predio_id where p.nome = 'Casa da Serra';
+grant select on _casa to authenticated;
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000a', false) \g /dev/null
+update unidades set status = 'ocupado' where id = (select id from _casa);
+insert into _resultado select 'Ana vê a casa mas não altera', (select status = 'vago' from unidades where id = (select id from _casa));
+update unidades set status = 'ocupado' where id = (select id from _u);
+insert into _resultado select 'Ana continua alterando apartamento', (select status = 'ocupado' from unidades where id = (select id from _u));
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000005a0', false) \g /dev/null
+update unidades set status = 'ocupado' where id = (select id from _casa);
+insert into _resultado select 'Saulo altera a casa (carimbo com o nome dele)',
+  (select status = 'ocupado' and atualizado_por_nome = 'Saulo' from unidades where id = (select id from _casa));
+update unidades set status = 'vago' where id = (select id from _u);
+insert into _resultado select 'Saulo também altera apartamento', (select status = 'vago' from unidades where id = (select id from _u));
+do $$ begin
+  update agenda.predios set editavel_por = null;
+  insert into _resultado values ('app não destrava a casa', false);
+exception when insufficient_privilege then
+  insert into _resultado values ('app não destrava a casa', true);
+end $$;
+reset role;
+\i supabase/migrations/0009_casas_so_saulo.sql
+insert into _resultado select '0009 reaplicada: idempotente', (select count(*) = 5 from predios where editavel_por is not null)
+  and (select count(*) = 1 from pg_policies where tablename = 'unidades' and cmd = 'UPDATE');
 
 \echo
 select case when ok then 'PASSOU' else 'FALHOU' end as resultado, teste from _resultado;

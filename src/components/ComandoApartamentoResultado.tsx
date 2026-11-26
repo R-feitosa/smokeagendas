@@ -12,6 +12,7 @@ type Linha =
   | { tipo: 'erro'; numero: string; alvo: Alvo }
   | { tipo: 'escolher'; numero: string; opcoes: Alvo[] }
   | { tipo: 'nao-existe'; numero: string }
+  | { tipo: 'bloqueado'; numero: string; alvo: Alvo }
 
 type Props = {
   comando: ComandoApartamento
@@ -33,6 +34,8 @@ export function ComandoApartamentoResultado({ comando, transcricao, onEraComprom
     comando.itens.map((i): Linha =>
       i.opcoes.length === 0
         ? { tipo: 'nao-existe', numero: i.numero }
+        : i.opcoes.length === 1 && !i.opcoes[0].predio.pode_alterar
+          ? { tipo: 'bloqueado', numero: i.numero, alvo: i.opcoes[0] }
         : i.opcoes.length > 1
           ? { tipo: 'escolher', numero: i.numero, opcoes: i.opcoes }
           : i.opcoes[0].unidade.status === status
@@ -115,6 +118,7 @@ export function ComandoApartamentoResultado({ comando, transcricao, onEraComprom
                   {l.tipo === 'feito' && (desfeito ? ` · voltou para ${rotuloStatus(l.anterior).toLowerCase()}` : ` · agora está ${rotuloStatus(status).toLowerCase()}`)}
                   {l.tipo === 'ja-estava' && ` · já estava ${rotuloStatus(status).toLowerCase()}`}
                   {l.tipo === 'erro' && ' · não foi possível salvar'}
+                  {l.tipo === 'bloqueado' && ` · só ${l.alvo.predio.editavel_por_nome ?? 'o responsável'} altera; nada foi mudado`}
                 </span>
                 {l.tipo === 'erro' && (
                   <button type="button" className="btn btn--sec" onClick={() => aplicar(i, l.alvo)}>

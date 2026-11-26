@@ -60,6 +60,10 @@ export type Predio = {
   tipo_unidade: 'apartamento' | 'sala' | 'imovel'
   /** locacao = prédio de apartamentos/salas; temporada = casa de temporada */
   categoria: 'locacao' | 'temporada'
+  /** quem pode mudar o status (null = qualquer habilitado); nome para a tela */
+  editavel_por_nome: string | null
+  /** calculado no app: a pessoa logada pode mudar o status das unidades deste prédio */
+  pode_alterar: boolean
   ordem: number
   unidades: Unidade[]
 }

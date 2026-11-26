@@ -107,16 +107,24 @@ const COLUNAS_UNIDADE = 'id, predio_id, numero, status, status_desde, atualizado
 
 /** Prédios (na ordem cadastrada) com as unidades em ordem de porta. Dados do escritório: todos os habilitados veem o mesmo. */
 export async function listarPredios(): Promise<Predio[]> {
-  const [predios, unidades] = await Promise.all([
-    supabase.from('predios').select('id, nome, tipo_unidade, categoria, ordem').order('ordem').order('nome'),
+  const [predios, unidades, sessao] = await Promise.all([
+    supabase.from('predios').select('id, nome, tipo_unidade, categoria, ordem, editavel_por, editavel_por_nome').order('ordem').order('nome'),
     supabase.from('unidades').select(COLUNAS_UNIDADE),
+    supabase.auth.getSession(),
   ])
+  const eu = sessao.data.session?.user.id
   if (predios.error) throw predios.error
   if (unidades.error) throw unidades.error
 
   const porPredio = new Map<string, Unidade[]>()
   for (const u of unidades.data as Unidade[]) porPredio.set(u.predio_id, [...(porPredio.get(u.predio_id) ?? []), u])
-  return (predios.data as Omit<Predio, 'unidades'>[]).map((p) => ({ ...p, unidades: ordenarUnidades(porPredio.get(p.id) ?? []) }))
+  type Linha = Omit<Predio, 'unidades' | 'pode_alterar'> & { editavel_por: string | null }
+  // a trava de verdade é a policy do banco (0009); isto só evita oferecer o que vai ser recusado
+  return (predios.data as Linha[]).map(({ editavel_por, ...p }) => ({
+    ...p,
+    pode_alterar: !editavel_por || editavel_por === eu,
+    unidades: ordenarUnidades(porPredio.get(p.id) ?? []),
+  }))
 }
 
 /**
@@ -133,4 +141,11 @@ export async function mudarStatusUnidade(id: string, status: StatusUnidade): Pro
 export function semTabelasDeApartamentos(erro: unknown): boolean {
   const codigo = (erro as { code?: string } | null)?.code
   return codigo === 'PGRST205' || codigo === '42P01'
+}
+
+/** Nome do próprio perfil (agenda.perfis), para a saudação do painel */
+export async function meuNome(): Promise<string | null> {
+  const { data, error } = await supabase.from('perfis').select('nome').maybeSingle()
+  if (error) throw error
+  return (data?.nome as string | null | undefined)?.trim() || null
 }
