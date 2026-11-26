@@ -435,46 +435,96 @@ a.painel__card:active, .painel__atalho:active { transform: scale(.98); }
 
 /* ===================================================================
    Ficha impressa da vistoria (Gerar PDF): só existe na impressão.
-   Formato da ficha de papel da Feitosa, A4, preto e azul.
+   Reproduz as fichas de papel da Feitosa — .doc--apto (AP 304 · Feitosa II)
+   e .doc--casa (Casa da Serra). Uma .doc__pagina = uma folha A4.
    =================================================================== */
 .doc { display: none; }
 @media print {
-  @page { size: A4; margin: 14mm 13mm; }
+  @page { size: A4; margin: 0; }
   html, body, #root { height: auto; background: #fff !important; }
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .topo, .tabbar, .aptos__aviso { display: none !important; }
   .app { display: block !important; }
   .app__conteudo { padding: 0 !important; margin: 0 !important; max-width: none !important; }
   .vist > :not(.doc) { display: none !important; }
-  .doc { display: block; color: #1a2233; font: 9.5pt/1.35 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
-  .doc__marca { display: flex; align-items: center; justify-content: center; gap: 10px; color: #2c4296; }
-  .doc__marca span { display: flex; flex-direction: column; line-height: 1; font-family: 'Cinzel', 'Trajan Pro', Georgia, serif; }
-  .doc__marca strong { font-size: 22pt; font-weight: 400; letter-spacing: .06em; }
-  .doc__marca small { font-size: 6.5pt; letter-spacing: .14em; text-transform: uppercase; margin-top: 2px; }
-  .doc__titulo { margin: 10px 0 0; text-align: center; font-size: 15pt; letter-spacing: .02em; text-transform: uppercase; color: #22357a; }
-  .doc__subtitulo { margin: 2px 0 12px; text-align: center; font-size: 8.5pt; color: #4a6fa5; }
-  .doc table { width: 100%; border-collapse: collapse; }
-  .doc__cab th { width: 15%; text-align: left; font-size: 7.5pt; text-transform: uppercase; letter-spacing: .04em; color: #2c4296; padding: 5px 6px 5px 0; }
-  .doc__cab td { width: 35%; padding: 5px 10px 5px 0; font-weight: 600; border-bottom: .5pt solid #c9d3e6; }
-  .doc__secao { margin-top: 12px; }
-  .doc__secao h2 { margin: 0 0 4px; padding: 4px 8px; font-size: 10pt; text-transform: uppercase; letter-spacing: .03em; color: #fff; background: #2c4296; break-after: avoid; }
-  .doc__secao h2 small { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: .85; }
-  .doc__tabela thead th { padding: 3px 5px; font-size: 7.5pt; text-transform: uppercase; color: #22357a; background: #e6eaf6; text-align: left; }
-  .doc__tabela td { padding: 3.5px 5px; border-bottom: .5pt solid #d7dde9; vertical-align: top; }
-  .doc__tabela tr { break-inside: avoid; }
-  .doc__tabela td:first-child { width: 40%; }
-  .doc__tabela .doc__nota { width: 7%; text-align: center; font-weight: 700; }
-  .doc__ruim td { background: #fdecec; }
-  .doc__oper td:first-child { width: 6%; font-size: 12pt; line-height: 1; }
-  .doc__oper td:nth-child(2) { width: 52%; }
-  .doc__rotulo-obs { color: #6b7a99; }
-  .doc__pendencias { margin: 4px 0 0; min-height: 40px; white-space: pre-wrap; border-bottom: .5pt solid #c9d3e6; padding-bottom: 6px; }
-  .doc__fim { break-inside: avoid; }
-  .doc__declaracao { margin: 4px 0 0; font-size: 8.5pt; text-align: justify; }
-  .doc__assinaturas { display: flex; gap: 40px; margin-top: 46px; }
-  .doc__assinaturas div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 8.5pt; text-transform: uppercase; }
-  .doc__assinaturas small { text-transform: none; color: #4a5872; }
-  .doc__linha { width: 100%; border-top: .8pt solid #1a2233; margin-bottom: 4px; }
-  .doc__local { margin-top: 18px; text-align: right; color: #4a5872; }
-  .doc__rodape { margin-top: 28px; text-align: center; font-size: 7pt; color: #8a97b1; border-top: .5pt solid #c9d3e6; padding-top: 3px; }
+
+  .doc { display: block; color: #222; font: 9pt/1.3 Arial, 'Helvetica Neue', Helvetica, sans-serif; }
+  .doc__pagina { display: flex; flex-direction: column; min-height: 296mm; padding: 14mm 15mm 10mm; break-after: page; }
+  .doc__pagina:last-child { break-after: auto; }
+  .doc__miolo { flex: 1; }
+  .doc__rodape { display: flex; justify-content: space-between; gap: 12px; margin-top: 8mm; padding-top: 4px; font-size: 6.8pt; letter-spacing: .02em; color: #8796a8; }
+
+  /* logo (topo de cada página) */
+  .doc__logo { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 6mm; }
+  .doc__logo svg { width: 22mm; height: auto; }
+  .doc__logo span { display: flex; flex-direction: column; line-height: 1; font-family: 'Cinzel', 'Trajan Pro', Georgia, serif; color: #5d7f98; }
+  .doc__logo strong { font-size: 26pt; font-weight: 400; letter-spacing: .05em; }
+  .doc__logo small { font-size: 6.2pt; letter-spacing: .16em; margin-top: 2px; color: #8aa3b5; }
+
+  .doc__titulo { margin: 0; text-align: center; font-size: 15pt; font-weight: 700; color: #2f6f93; }
+  .doc__subtitulo { margin: 4px 0 8mm; text-align: center; font-size: 8pt; color: #5fa3c7; }
+
+  /* cabeçalho Locatário / Unidade / ... */
+  .doc__cab { width: 100%; border-collapse: collapse; margin-bottom: 7mm; }
+  .doc__cab th { width: 15%; padding: 0 0 8mm; text-align: left; vertical-align: top; font-size: 7.3pt; font-weight: 700; color: #222; }
+  .doc__cab td { width: 35%; padding: 0 3mm 8mm 0; vertical-align: top; font-size: 7.6pt; }
+
+  /* tabelas de avaliação */
+  .doc__tabela { width: 100%; border-collapse: collapse; }
+  .doc__tabela thead th { padding: 3mm 2.5mm; font-size: 7pt; font-weight: 700; text-align: left; color: #fff; background: #3e6a86; }
+  .doc__tabela .doc__col { width: 9%; text-align: center; padding-left: 0; padding-right: 0; }
+  .doc__tabela thead th.doc__col { border-left: .4pt solid rgba(255, 255, 255, .55); }
+  .doc__tabela td { padding: 0 2.5mm; height: 11.6mm; font-size: 7.6pt; vertical-align: middle; }
+  .doc__tabela td:first-child { width: 34%; }
+  .doc__tabela td.doc__col { border-left: .4pt solid #e6e9ee; }
+  .doc__tabela tbody tr:first-child td { padding-top: 1.5mm; }
+  .doc__obs { color: #1d3f7a; font-family: 'Segoe Print', 'Bradley Hand', cursive; font-size: 8.5pt; }
+
+  .doc__caixa { display: inline-block; position: relative; width: 3.3mm; height: 3.3mm; border: .7pt solid #3a3f47; vertical-align: middle; }
+  .doc__caixa--x::after { content: ''; position: absolute; left: .9mm; top: -.6mm; width: 1.2mm; height: 2.8mm; border: solid #1d3f7a; border-width: 0 .55mm .55mm 0; transform: rotate(40deg); }
+
+  .doc__como { margin: 0 0 6mm; font-size: 8pt; }
+  .doc__secao { margin: 0 0 3mm; font-size: 10.5pt; font-weight: 700; color: #2f6f93; break-after: avoid; }
+
+  /* operacional, pendências, declaração, assinaturas */
+  .doc__oper { list-style: none; margin: 0 0 7mm; padding: 0; }
+  .doc__oper li { display: flex; align-items: baseline; gap: 2mm; margin-bottom: 4.5mm; font-size: 8pt; }
+  .doc__oper .doc__caixa { flex: none; align-self: center; }
+  .doc__oper-obs { color: #8aa3b5; white-space: nowrap; }
+  .doc__escrito { display: inline-block; min-width: 38mm; padding: 0 1mm; border-bottom: .5pt solid #9aa5b3; color: #1d3f7a; font-family: 'Segoe Print', 'Bradley Hand', cursive; font-size: 8.5pt; }
+  .doc__pendencias { margin-bottom: 8mm; }
+  .doc__linha-escrita { margin: 0; min-height: 7mm; padding: 1.5mm 1mm 0; border-bottom: .5pt solid #4a4f57; color: #1d3f7a; font-family: 'Segoe Print', 'Bradley Hand', cursive; font-size: 9pt; width: 135mm; }
+  .doc__declaracao { margin: 0; font-size: 7.8pt; line-height: 1.45; }
+  .doc__assinaturas { display: flex; gap: 22mm; margin-top: 22mm; }
+  .doc__assinaturas div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1.5mm; font-size: 7.6pt; }
+  .doc__traco { width: 100%; border-top: .6pt solid #222; }
+  .doc__local { margin: 9mm 0 0; text-align: center; font-size: 8pt; }
+
+  /* ---- variações da ficha da casa (Casa da Serra) ---- */
+  .doc--casa .doc__logo strong { color: #8fb1c8; }
+  .doc--casa .doc__titulo { color: #2f86bd; }
+  .doc--casa .doc__subtitulo { color: #7aa9c6; margin-bottom: 5mm; }
+  .doc--casa .doc__cab { margin-bottom: 5mm; }
+  .doc--casa .doc__cab th { padding-bottom: 2mm; color: #2f86bd; }
+  .doc--casa .doc__cab td { padding-bottom: 2mm; text-transform: uppercase; font-weight: 600; }
+  .doc--casa .doc__como { display: flex; align-items: center; gap: 3mm; margin-bottom: 6mm; color: #2f86bd; font-size: 7.3pt; }
+  .doc--casa .doc__como p { margin: 0; color: #2f86bd; }
+  .doc--casa .doc__como strong { color: #1f6fa3; }
+  .doc__i { flex: none; display: grid; place-items: center; width: 11mm; height: 9mm; background: #5fb6e6; color: #fff; font-weight: 700; }
+  .doc--casa .doc__secao { display: flex; align-items: baseline; gap: 3mm; margin: 4mm 0 2mm; color: #2f86bd; font-size: 10pt; }
+  .doc--casa .doc__secao small { font-size: 6.8pt; font-weight: 400; color: #8fb6cf; }
+  .doc__num { display: inline-grid; place-items: center; width: 11mm; height: 6.5mm; background: #3d8fc9; color: #fff; font-size: 8.5pt; }
+  .doc--casa .doc__tabela thead th { padding: 1mm 2mm; background: #3f8fc6; text-align: center; }
+  .doc--casa .doc__tabela thead th:first-child { text-align: center; }
+  .doc--casa .doc__tabela td { height: 6.3mm; font-size: 7.4pt; }
+  .doc--casa .doc__tabela td.doc__col { border-left: 0; }
+  .doc--casa .doc__caixa { width: 3mm; height: 3mm; border-color: #8a9099; }
+  .doc--casa .doc__oper li { margin-bottom: 2.5mm; font-size: 7.4pt; }
+  .doc--casa .doc__oper-rotulo { flex: 1; }
+  .doc--casa .doc__pendencias { margin-bottom: 4mm; }
+  .doc--casa .doc__linha-escrita { min-height: 5.5mm; border-bottom-color: #d4dae2; width: auto; }
+  .doc--casa .doc__declaracao { text-align: justify; font-size: 7.4pt; }
+  .doc--casa .doc__assinaturas { margin-top: 10mm; gap: 30mm; }
+  .doc--casa .doc__local { text-align: right; color: #7aa9c6; margin-top: 4mm; }
+  .doc--casa .doc__rodape { justify-content: center; }
 }
