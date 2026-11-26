@@ -26,6 +26,12 @@ const IconeApartamentos = () => (
     <path d="M8.5 9h.01M12 9h.01M15.5 9h.01M8.5 12.5h.01M12 12.5h.01M15.5 12.5h.01" strokeWidth={2.4} />
   </svg>
 )
+const IconeVistoria = () => (
+  <svg {...tracos}>
+    <rect x="5" y="4" width="14" height="17" rx="2.5" />
+    <path d="M9 4V3h6v1M8.5 10.5l1.5 1.5 3-3M8.5 16h7" />
+  </svg>
+)
 const IconeAjustes = () => (
   <svg {...tracos}>
     <path d="M4 7h10M18 7h2M4 17h4M12 17h8" />
@@ -83,6 +89,12 @@ export function Layout() {
             <IconeApartamentos />
           </span>
           Apartamentos
+        </NavLink>
+        <NavLink to="/vistorias">
+          <span>
+            <IconeVistoria />
+          </span>
+          Vistorias
         </NavLink>
         <NavLink to="/ajustes">
           <span>
