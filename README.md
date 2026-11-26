@@ -187,7 +187,10 @@ cabeçalho (locatário, data, cidade, locador), **1 Quarto** (7 itens) e **2 Ban
 - *Desfazer* com a vistoria ainda em branco → ela é apagada. Com algo preenchido, fica.
 - Unidade que já estava vaga: botão **Vistoria de saída (checklist)** na folha da unidade.
 - Salva sozinha a cada toque. **Concluir** exige os 18 itens avaliados e descrição em todo item *Ruim*;
-  concluída fica travada (trigger), com vistoriador e data, e pode ser impressa/salva em PDF.
+  concluída fica travada (trigger), com vistoriador e data.
+- **Gerar PDF** (vistoria concluída): monta a ficha no formato do papel da Feitosa (`src/components/VistoriaDocumento.tsx`,
+  estilos `.doc` em `styles.css`, A4) e abre a impressão do navegador: imprimir ou "Salvar como PDF". Linhas de
+  assinatura em branco para assinar à mão; o arquivo sugerido sai como "Vistoria de saída - <unidade> - <data>".
 - Aba **Vistorias** na barra de baixo (e atalho no painel Hoje): a fazer e concluídas.
 
 ## Aba Hoje (painel do dia)

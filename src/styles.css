@@ -375,14 +375,7 @@ a.painel__card:active, .painel__atalho:active { transform: scale(.98); }
 .vist__fim .btn { width: 100%; padding: 16px; font-size: 1.05rem; }
 .folha__vistoria { width: 100%; margin-top: 12px; }
 @media (min-width: 600px) { .vist__item { grid-template-columns: minmax(0, 1fr) 300px; align-items: center; } .vist__item .vist__obs, .vist__item .vist__add-obs { grid-column: 1 / -1; } }
-@media print {
-  .topo, .tabbar, .vist__voltar, .vist__barra, .vist__concluida button, .vist__add-obs, .vist__sugerir, .vist__fim { display: none !important; }
-  .app__conteudo { padding: 0; max-width: none; }
-  .vist__item, .vist__oper, .vist__cabecalho { break-inside: avoid; }
-  .vist__nota:not([aria-checked="true"]) { display: none; }
-}
 .vist__tudo { display: block; margin: -2px 0 10px; padding: 8px 12px; border: 1px dashed #047857; border-radius: 10px; background: #ecfdf5; color: #047857; font: inherit; font-size: .88rem; font-weight: 700; }
-@media print { .vist__tudo { display: none !important; } }
 
 /* ===================================================================
    Computador (≥ 960 px): menu lateral fixo no lugar da barra de baixo,
@@ -435,3 +428,53 @@ a.painel__card:active, .painel__atalho:active { transform: scale(.98); }
 @keyframes folha-some { to { opacity: 0; transform: translateY(16px) scale(.98); } }
 @media (prefers-reduced-motion: reduce) { .folha--saindo { animation: none; } }
 @media (min-width: 1600px) { .app__conteudo { max-width: 1360px; } }
+
+/* vistoria concluída: botão Gerar PDF */
+.vist__concluida .vist__pdf { flex: none; padding: 12px 22px; }
+.vist__pdf-dica { flex-basis: 100%; font-weight: 500; color: var(--suave); font-size: .8rem; }
+
+/* ===================================================================
+   Ficha impressa da vistoria (Gerar PDF): só existe na impressão.
+   Formato da ficha de papel da Feitosa, A4, preto e azul.
+   =================================================================== */
+.doc { display: none; }
+@media print {
+  @page { size: A4; margin: 14mm 13mm; }
+  html, body, #root { height: auto; background: #fff !important; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .topo, .tabbar, .aptos__aviso { display: none !important; }
+  .app { display: block !important; }
+  .app__conteudo { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+  .vist > :not(.doc) { display: none !important; }
+  .doc { display: block; color: #1a2233; font: 9.5pt/1.35 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  .doc__marca { display: flex; align-items: center; justify-content: center; gap: 10px; color: #2c4296; }
+  .doc__marca span { display: flex; flex-direction: column; line-height: 1; font-family: 'Cinzel', 'Trajan Pro', Georgia, serif; }
+  .doc__marca strong { font-size: 22pt; font-weight: 400; letter-spacing: .06em; }
+  .doc__marca small { font-size: 6.5pt; letter-spacing: .14em; text-transform: uppercase; margin-top: 2px; }
+  .doc__titulo { margin: 10px 0 0; text-align: center; font-size: 15pt; letter-spacing: .02em; text-transform: uppercase; color: #22357a; }
+  .doc__subtitulo { margin: 2px 0 12px; text-align: center; font-size: 8.5pt; color: #4a6fa5; }
+  .doc table { width: 100%; border-collapse: collapse; }
+  .doc__cab th { width: 15%; text-align: left; font-size: 7.5pt; text-transform: uppercase; letter-spacing: .04em; color: #2c4296; padding: 5px 6px 5px 0; }
+  .doc__cab td { width: 35%; padding: 5px 10px 5px 0; font-weight: 600; border-bottom: .5pt solid #c9d3e6; }
+  .doc__secao { margin-top: 12px; }
+  .doc__secao h2 { margin: 0 0 4px; padding: 4px 8px; font-size: 10pt; text-transform: uppercase; letter-spacing: .03em; color: #fff; background: #2c4296; break-after: avoid; }
+  .doc__secao h2 small { font-weight: 400; text-transform: none; letter-spacing: 0; opacity: .85; }
+  .doc__tabela thead th { padding: 3px 5px; font-size: 7.5pt; text-transform: uppercase; color: #22357a; background: #e6eaf6; text-align: left; }
+  .doc__tabela td { padding: 3.5px 5px; border-bottom: .5pt solid #d7dde9; vertical-align: top; }
+  .doc__tabela tr { break-inside: avoid; }
+  .doc__tabela td:first-child { width: 40%; }
+  .doc__tabela .doc__nota { width: 7%; text-align: center; font-weight: 700; }
+  .doc__ruim td { background: #fdecec; }
+  .doc__oper td:first-child { width: 6%; font-size: 12pt; line-height: 1; }
+  .doc__oper td:nth-child(2) { width: 52%; }
+  .doc__rotulo-obs { color: #6b7a99; }
+  .doc__pendencias { margin: 4px 0 0; min-height: 40px; white-space: pre-wrap; border-bottom: .5pt solid #c9d3e6; padding-bottom: 6px; }
+  .doc__fim { break-inside: avoid; }
+  .doc__declaracao { margin: 4px 0 0; font-size: 8.5pt; text-align: justify; }
+  .doc__assinaturas { display: flex; gap: 40px; margin-top: 46px; }
+  .doc__assinaturas div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 8.5pt; text-transform: uppercase; }
+  .doc__assinaturas small { text-transform: none; color: #4a5872; }
+  .doc__linha { width: 100%; border-top: .8pt solid #1a2233; margin-bottom: 4px; }
+  .doc__local { margin-top: 18px; text-align: right; color: #4a5872; }
+  .doc__rodape { margin-top: 28px; text-align: center; font-size: 7pt; color: #8a97b1; border-top: .5pt solid #c9d3e6; padding-top: 3px; }
+}
