@@ -9,6 +9,8 @@ type Props = {
   /** grava o novo status; rejeita se o servidor recusar */
   onMudar: (status: StatusUnidade) => Promise<void>
   onFechar: () => void
+  /** unidade vaga de locação: abre o checklist de saída */
+  onVistoria?: () => Promise<void>
 }
 
 const tracos = { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true }
@@ -37,7 +39,7 @@ const TEMPO_SAIDA = 190 // ms, igual à animação folha-desce
  * Folha que sobe ao tocar numa unidade: mostra o status atual e deixa escolher
  * Vago ou Ocupado. Escolher o outro grava na hora; escolher o atual só fecha.
  */
-export function UnidadeFolha({ predio, unidade, onMudar, onFechar }: Props) {
+export function UnidadeFolha({ predio, unidade, onMudar, onFechar, onVistoria }: Props) {
   const dlg = useRef<HTMLDialogElement>(null)
   const saida = useRef<number>()
   const [saindo, setSaindo] = useState(false)
@@ -140,6 +142,17 @@ export function UnidadeFolha({ predio, unidade, onMudar, onFechar }: Props) {
             Última alteração: {unidade.atualizado_por_nome ? `${unidade.atualizado_por_nome}, ` : ''}
             {dataCurta(new Date(unidade.atualizado_em))} às {hora(unidade.atualizado_em)}
           </p>
+        )}
+
+        {onVistoria && (
+          <button
+            type="button"
+            className="btn folha__vistoria"
+            disabled={salvando !== null}
+            onClick={() => onVistoria().catch(() => setErro('Não foi possível abrir a vistoria.'))}
+          >
+            Vistoria de saída (checklist)
+          </button>
         )}
 
         <button type="button" className="folha__fechar" aria-label="Fechar" disabled={salvando !== null} onClick={fechar}>

@@ -1,6 +1,7 @@
 import { ordenarUnidades } from './apartamentos'
 import { supabase } from './supabase'
 import type { Evento, Predio, Rascunho, StatusUnidade, Unidade } from './types'
+import type { Vistoria } from './vistoria'
 
 /** Envia o áudio para a Edge Function e recebe o rascunho (nada é salvo ainda). */
 export async function processarAudio(blob: Blob): Promise<Rascunho> {
@@ -148,4 +149,60 @@ export async function meuNome(): Promise<string | null> {
   const { data, error } = await supabase.from('perfis').select('nome').maybeSingle()
   if (error) throw error
   return (data?.nome as string | null | undefined)?.trim() || null
+}
+
+// ---- vistoria de saída (migration 0010) ----
+
+/** Vistoria com o nome da unidade para listas e cabeçalho */
+export type VistoriaComUnidade = Vistoria & { predio_nome: string; numero: string; tipo_unidade: 'apartamento' | 'sala' | 'imovel' }
+
+const COLUNAS_VISTORIA = '*, unidades(numero, predios(nome, tipo_unidade))'
+
+type LinhaVistoria = Vistoria & { unidades: { numero: string; predios: { nome: string; tipo_unidade: VistoriaComUnidade['tipo_unidade'] } } | null }
+function achatar(v: LinhaVistoria): VistoriaComUnidade {
+  const { unidades, ...resto } = v
+  return { ...resto, numero: unidades?.numero ?? '?', predio_nome: unidades?.predios.nome ?? '?', tipo_unidade: unidades?.predios.tipo_unidade ?? 'apartamento' }
+}
+
+/** Em andamento primeiro (mais antigas no topo: estão esperando há mais tempo), depois as concluídas */
+export async function listarVistorias(): Promise<VistoriaComUnidade[]> {
+  const { data, error } = await supabase.from('vistorias').select(COLUNAS_VISTORIA).order('criada_em', { ascending: false }).limit(200)
+  if (error) throw error
+  const todas = (data as LinhaVistoria[]).map(achatar)
+  const abertas = todas.filter((v) => v.status === 'em_andamento').reverse()
+  return [...abertas, ...todas.filter((v) => v.status === 'concluida')]
+}
+
+export async function obterVistoria(id: string): Promise<VistoriaComUnidade> {
+  const { data, error } = await supabase.from('vistorias').select(COLUNAS_VISTORIA).eq('id', id).single()
+  if (error) throw error
+  return achatar(data as LinhaVistoria)
+}
+
+/** A vistoria aberta da unidade (criada ao vagar), se houver */
+export async function vistoriaAbertaDaUnidade(unidadeId: string): Promise<string | null> {
+  const { data, error } = await supabase.from('vistorias').select('id').eq('unidade_id', unidadeId).eq('status', 'em_andamento').maybeSingle()
+  if (error) throw error
+  return (data?.id as string | undefined) ?? null
+}
+
+/** Para unidade que já estava vaga antes da vistoria existir no app */
+export async function iniciarVistoria(unidadeId: string): Promise<string> {
+  const { data, error } = await supabase.from('vistorias').insert({ unidade_id: unidadeId }).select('id').single()
+  if (error) throw error
+  return data.id as string
+}
+
+export type CamposVistoria = Partial<Pick<Vistoria, 'locatario' | 'data_vistoria' | 'cidade' | 'locador' | 'respostas' | 'operacional' | 'pendencias'>>
+
+export async function salvarVistoria(id: string, campos: CamposVistoria): Promise<void> {
+  const { error } = await supabase.from('vistorias').update(campos).eq('id', id).eq('status', 'em_andamento')
+  if (error) throw error
+}
+
+/** Conclui (o banco carimba quem/quando e trava a vistoria) */
+export async function concluirVistoria(id: string, campos: CamposVistoria): Promise<VistoriaComUnidade> {
+  const { error } = await supabase.from('vistorias').update({ ...campos, status: 'concluida' }).eq('id', id)
+  if (error) throw error
+  return obterVistoria(id)
 }

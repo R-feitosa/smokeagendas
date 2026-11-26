@@ -8,6 +8,8 @@ import { Gravar } from './pages/Gravar'
 import { Hoje } from './pages/Hoje'
 import { Login } from './pages/Login'
 import { Calendario } from './pages/Calendario'
+import { Vistoria } from './pages/Vistoria'
+import { Vistorias } from './pages/Vistorias'
 import { configurado, servidor } from './lib/supabase'
 
 export default function App() {
@@ -44,6 +46,8 @@ export default function App() {
         <Route path="gravar" element={<Gravar />} />
         <Route path="novo" element={<Navigate to="/gravar" replace />} />
         <Route path="apartamentos" element={<Apartamentos />} />
+        <Route path="vistorias" element={<Vistorias />} />
+        <Route path="vistorias/:id" element={<Vistoria />} />
         <Route path="ajustes" element={<Ajustes />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

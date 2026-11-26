@@ -137,9 +137,15 @@ export function ComandoApartamentoResultado({ comando, transcricao, onEraComprom
             {desfazendo ? 'Desfazendo…' : 'Desfazer'}
           </button>
         )}
-        <Link to="/apartamentos" className="btn">
-          Ver na aba Apartamentos
-        </Link>
+        {status === 'vago' && !desfeito && feitos.some((l) => l.alvo.predio.categoria !== 'temporada') ? (
+          <Link to="/vistorias" className="btn">
+            Fazer vistoria
+          </Link>
+        ) : (
+          <Link to="/apartamentos" className="btn">
+            Ver na aba Apartamentos
+          </Link>
+        )}
       </div>
       <div className="comando__acoes">
         <button type="button" className="btn btn--sec" onClick={onGravarOutro} disabled={aplicando || desfazendo}>

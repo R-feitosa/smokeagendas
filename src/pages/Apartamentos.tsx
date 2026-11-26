@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react'
 import { Fumaca, type FumacaHandle } from '../components/Fumaca'
 import { UnidadeFolha } from '../components/UnidadeFolha'
-import { listarPredios, mudarStatusUnidade, semTabelasDeApartamentos } from '../lib/api'
+import { iniciarVistoria, listarPredios, mudarStatusUnidade, semTabelasDeApartamentos, vistoriaAbertaDaUnidade } from '../lib/api'
+import { useNavigate } from 'react-router-dom'
 import {
   contagemVagos,
   fileiras,
@@ -24,7 +25,7 @@ const TEMPO_FUMACA = 4200 // ms até a baforada sumir (a partícula mais longa v
 const TEMPO_ENTRADA = 1400 // ms da entrada em cascata das placas (só na primeira carga)
 const TEMPO_TROCA = 700 // ms da animação da placa que mudou
 
-type Aviso = { texto: string; desfazer?: () => void }
+type Aviso = { texto: string; desfazer?: () => void; vistoria?: string }
 
 /** variável CSS --i: posição do item, para a entrada em cascata */
 const posicao = (i: number) => ({ '--i': i }) as CSSProperties
@@ -49,6 +50,13 @@ export function Apartamentos() {
   const [mudou, setMudou] = useState<string | null>(null) // última unidade alterada (anima a placa)
   const [fumaca, setFumaca] = useState<string | null>(null) // unidade que acabou de vagar: "puf"
   const [aviso, setAviso] = useState<Aviso | null>(null)
+  const navigate = useNavigate()
+
+  /** Abre o checklist da unidade vaga: a vistoria aberta (criada ao vagar) ou uma nova */
+  async function abrirVistoria(unidade: Unidade) {
+    const id = (await vistoriaAbertaDaUnidade(unidade.id)) ?? (await iniciarVistoria(unidade.id))
+    navigate(`/vistorias/${id}`)
+  }
   const [entrando, setEntrando] = useState(true) // primeira carga: placas entram em cascata
   // cada carga e cada gravação avançam a versão: resposta de uma carga mais antiga é descartada,
   // para uma lista pedida antes de salvar não devolver o status velho à tela
@@ -134,6 +142,12 @@ export function Apartamentos() {
             },
           },
     )
+    // vagou (locação): o banco já abriu a vistoria de saída; o aviso ganha o atalho
+    if (!desfazendo && nova.status === 'vago' && predio.categoria !== 'temporada') {
+      vistoriaAbertaDaUnidade(nova.id)
+        .then((vid) => vid && setAviso((a) => (a && !a.vistoria ? { ...a, texto: `${onde} está vago: faça a vistoria de saída`, vistoria: vid } : a)))
+        .catch(() => {})
+    }
   }
 
   // prédios de locação no resumo e no quadro; casas de temporada numa seção à parte
@@ -327,12 +341,18 @@ export function Apartamentos() {
           unidade={selecionada.unidade}
           onMudar={(status) => mudar(selecionada.predio, selecionada.unidade, status)}
           onFechar={() => setAberta(null)}
+          onVistoria={selecionada.predio.categoria !== 'temporada' && selecionada.unidade.status === 'vago' ? () => abrirVistoria(selecionada.unidade) : undefined}
         />
       )}
 
       {aviso && (
         <div className="aptos__aviso" role="status">
           <span>{aviso.texto}</span>
+          {aviso.vistoria && (
+            <button type="button" onClick={() => navigate(`/vistorias/${aviso.vistoria}`)}>
+              Fazer vistoria
+            </button>
+          )}
           {aviso.desfazer && (
             <button
               type="button"

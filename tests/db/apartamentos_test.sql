@@ -189,7 +189,7 @@ insert into _resultado select 'reaplicar não sobrescreve status alterado no app
   (select status = 'vago' and atualizado_em is not null from unidades where id = (select id from _u))
   and (select count(*) = 3 from unidades_historico);
 insert into _resultado select 'reaplicar não duplica triggers nem policies',
-  (select count(*) = 2 from pg_trigger where tgrelid = 'agenda.unidades'::regclass and not tgisinternal)
+  (select count(*) = 3 from pg_trigger where tgrelid = 'agenda.unidades'::regclass and not tgisinternal)
   and (select count(*) = 4 from pg_policies where schemaname = 'agenda'
         and tablename in ('predios', 'unidades', 'unidades_historico'));
 

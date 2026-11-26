@@ -52,7 +52,8 @@ agenda-voz/
     │   ├── 0006_responsavel_no_lembrete.sql  lembrete sai com o responsável (título do push)
     │   ├── 0007_apartamentos.sql  prédios + unidades (vago|ocupado) + histórico; carga da planilha
     │   ├── 0008_casas_temporada.sql  predios.categoria + 5 casas de temporada (1 unidade cada)
-    │   └── 0009_casas_so_saulo.sql  só o Saulo muda o status das casas (predios.editavel_por + policy)
+    │   ├── 0009_casas_so_saulo.sql  só o Saulo muda o status das casas (predios.editavel_por + policy)
+    │   └── 0010_vistorias.sql     vistoria de saída: tabela, abre ao vagar, trava ao concluir
     └── functions/
         ├── _shared/cors.ts
         ├── agenda-process-audio/ transcrever.ts → extrair.ts → validar.ts → rascunho
@@ -168,6 +169,21 @@ e depois a unidade `'1'` dela em `agenda.unidades`.
 na policy de UPDATE de `agenda.unidades`). Para outra pessoa, a folha mostra "Só Saulo altera…" e a voz
 não muda nada. Reaplicou a 0007? Reaplique a 0009 (a 0007 recria a policy sem a trava). Liberar uma casa
 para todos: `update agenda.predios set editavel_por = null, editavel_por_nome = null where nome = 'Casa X';`
+
+## Vistoria de saída (branch de teste `claude/vistoria-saida`)
+
+Checklist copiado do PDF "Checklist de vistoria de saída" da Feitosa (AP 304 · Feitosa II, 18/11/2026):
+cabeçalho (locatário, data, cidade, locador), **1 Quarto** (7 itens) e **2 Banheiro** (11 itens) com
+Ótimo / Bom / Ruim / N/A + observação, **3 Checklist operacional** (6 itens), **4 Pendências** e
+**5 Declaração**. Modelo em `src/lib/vistoria.ts` (`saida_v1`); respostas em `agenda.vistorias` (0010).
+
+- Unidade de **locação** marcada como **vaga** → o banco abre a vistoria; o aviso da aba mostra *Fazer vistoria*.
+  Casas de temporada não geram vistoria.
+- *Desfazer* com a vistoria ainda em branco → ela é apagada. Com algo preenchido, fica.
+- Unidade que já estava vaga: botão **Vistoria de saída (checklist)** na folha da unidade.
+- Salva sozinha a cada toque. **Concluir** exige os 18 itens avaliados e descrição em todo item *Ruim*;
+  concluída fica travada (trigger), com vistoriador e data, e pode ser impressa/salva em PDF.
+- Lista em **/vistorias** (atalho no painel Hoje): a fazer e concluídas.
 
 ## Aba Hoje (painel do dia)
 

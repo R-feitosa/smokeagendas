@@ -207,9 +207,9 @@ export function Hoje() {
           <span className="painel__icone painel__icone--azul">{Icone.predio}</span>
           Apartamentos
         </Link>
-        <Link to="/apartamentos#temporada" className="painel__atalho">
-          <span className="painel__icone painel__icone--azul">{Icone.casa}</span>
-          Casas de temporada
+        <Link to="/vistorias" className="painel__atalho">
+          <span className="painel__icone painel__icone--azul">{Icone.agenda}</span>
+          Vistorias
         </Link>
         <Link to="/ajustes" className="painel__atalho">
           <span className="painel__icone painel__icone--azul">{Icone.ajustes}</span>
