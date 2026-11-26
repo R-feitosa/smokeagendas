@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect, useRef } from 'react'
 import { liberarSom, tocarAlerta } from '../lib/som'
 import { Fumaca, type FumacaHandle } from './Fumaca'
@@ -43,6 +43,12 @@ const IconeAjustes = () => (
 export function Layout() {
   const icone = useRef<SVGSVGElement>(null)
   const fumaca = useRef<FumacaHandle>(null)
+  const { pathname, hash } = useLocation()
+
+  // cada tela abre no topo (sem isso herdava a rolagem da anterior); #âncora fica com a própria tela
+  useEffect(() => {
+    if (!hash) window.scrollTo(0, 0)
+  }, [pathname, hash])
 
   useEffect(() => {
     const aoMensagem = (e: MessageEvent) => {
