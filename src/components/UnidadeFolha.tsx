@@ -95,7 +95,7 @@ export function UnidadeFolha({ predio, unidade, onMudar, onFechar }: Props) {
     >
       <div className="folha__corpo">
         <span className="folha__alca" aria-hidden="true" />
-        <p className="folha__predio">{predio.nome}</p>
+        <p className="folha__predio">{predio.categoria === 'temporada' ? 'Casa de temporada' : predio.nome}</p>
         <h3 className="folha__titulo" id="folha-titulo">
           {nomeUnidade(predio, unidade)}
         </h3>

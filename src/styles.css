@@ -283,3 +283,18 @@ h3 { font-size: 1rem; margin-top: 20px; }
 .comando__acoes .btn { flex: 1; text-align: center; text-decoration: none; }
 .comando .aptos__marca--vago { background: #f2a21e; }
 .comando .aptos__marca--ocupado { background: #3350b0; }
+
+/* apartamentos: casas de temporada (seção separada, abaixo dos prédios) */
+.temporada { margin-top: 26px; }
+.temporada__topo { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding-bottom: 8px; margin-bottom: 10px; border-bottom: 2px solid var(--cor); }
+.temporada__titulo { margin: 0; font-family: 'Cinzel', 'Trajan Pro', Georgia, serif; font-size: 1.02rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--cor); }
+.temporada__conta { font-size: .8rem; color: var(--suave); white-space: nowrap; }
+.temporada__lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.temporada__casa { width: 100%; min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid var(--borda); border-left: 4px solid #3350b0; border-radius: 12px; background: #fff; color: var(--texto); font: inherit; text-align: left; transition: transform .12s; }
+.temporada__casa:active { transform: scale(.98); }
+.temporada__casa:focus-visible { outline: 2px solid var(--cor); outline-offset: 2px; }
+.temporada__casa--vago { border-left-color: #f2a21e; }
+.temporada__casa--mudou { animation: aptos-troca .5s cubic-bezier(.3, 1.4, .4, 1); }
+.temporada__nome { font-weight: 600; }
+.temporada__status { display: flex; align-items: center; gap: 6px; font-size: .85rem; font-weight: 600; color: var(--suave); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .temporada__casa--mudou { animation: none; } }

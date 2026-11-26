@@ -10,10 +10,13 @@ const NUMEROS: Record<string, number[]> = {
   'Feitosa 3': Array.from({ length: 34 }, (_, i) => i + 1),
   'Connect Office': [101, 102, 103, 104, 201, 202, 203],
 }
+const CASAS = ['Escritório Moradas', 'Residência Roneely', 'Casa da Serra', 'Casa Camocim', 'Apartamento de Fortaleza']
+for (const c of CASAS) NUMEROS[c] = [1]
 const PREDIOS: Predio[] = Object.entries(NUMEROS).map(([nome, ns], i) => ({
   id: `p${i + 1}`,
   nome,
-  tipo_unidade: nome === 'Connect Office' ? 'sala' : 'apartamento',
+  categoria: CASAS.includes(nome) ? 'temporada' : 'locacao',
+  tipo_unidade: CASAS.includes(nome) ? 'imovel' : nome === 'Connect Office' ? 'sala' : 'apartamento',
   ordem: i + 1,
   unidades: ns.map((n) => ({
     id: `p${i + 1}-${n}`, predio_id: `p${i + 1}`, numero: String(n), status: 'ocupado',
@@ -98,4 +101,22 @@ test('fala de compromisso não vira comando', () => {
   assert.equal(ler('Estou livre amanhã'), null) // status sem unidade
   assert.equal(interpretarComando('', PREDIOS), null)
   assert.equal(interpretarComando('Apartamento 304 vago', []), null)
+})
+
+test('casas de temporada: pelo nome, sem número', () => {
+  assert.deepEqual(ler('A Casa da Serra está ocupada'), { status: 'ocupado', alvos: ['Casa da Serra:Casa da Serra'] })
+  assert.deepEqual(ler('Camocim ficou livre'), { status: 'vago', alvos: ['Casa Camocim:Casa Camocim'] })
+  assert.deepEqual(ler('A casa de Camocim está alugada no fim de semana'), { status: 'ocupado', alvos: ['Casa Camocim:Casa Camocim'] })
+  assert.deepEqual(ler('Escritório Moradas desocupado'), { status: 'vago', alvos: ['Escritório Moradas:Escritório Moradas'] })
+  assert.deepEqual(ler('Residência Roneely ocupada'), { status: 'ocupado', alvos: ['Residência Roneely:Residência Roneely'] })
+  assert.deepEqual(ler('O apartamento de Fortaleza está vago'), { status: 'vago', alvos: ['Apartamento de Fortaleza:Apartamento de Fortaleza'] })
+})
+
+test('casas de temporada não confundem os prédios', () => {
+  // "apartamento" sozinho não aponta para o Apartamento de Fortaleza
+  assert.deepEqual(ler('Apartamento 404 desocupado'), { status: 'vago', alvos: ['Feitosa 2:404'] })
+  // casa citada + número solto de data: o número não vira unidade de prédio
+  assert.deepEqual(ler('A Casa da Serra fica ocupada até o dia 10'), { status: 'ocupado', alvos: ['Casa da Serra:Casa da Serra'] })
+  // "casa" sozinha não é nenhuma das casas
+  assert.equal(ler('A casa está vazia'), null)
 })

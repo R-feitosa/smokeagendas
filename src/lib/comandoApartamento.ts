@@ -63,14 +63,25 @@ export function detectarStatus(texto: string): StatusUnidade | null {
   return negado ? (status === 'vago' ? 'ocupado' : 'vago') : status
 }
 
-/** Trechos do texto que nomeiam cada prédio (nome inteiro; ou a 1ª palavra, se só um prédio a usa). */
+// palavras que não identificam um imóvel sozinhas
+const GENERICAS = new Set(['casa', 'apartamento', 'apto', 'sala', 'predio', 'edificio', 'escritorio', 'residencia', 'de', 'da', 'do', 'em'])
+
+/**
+ * Trechos do texto que nomeiam cada prédio/casa. Vale o nome inteiro e, como apelido:
+ * prédio de locação → a 1ª palavra, se só ele a usa ("Connect");
+ * casa de temporada → a última palavra, se não for genérica e só ela a usa ("Camocim", "Serra").
+ */
 function mencoesDePredios(n: string, predios: Predio[]): { predio: Predio; ini: number; fim: number }[] {
   const nc = colapsar(n)
-  const primeiras = predios.map((p) => colapsar(normalizar(p.nome).trim().split(' ')[0]))
+  const palavras = predios.map((p) => colapsar(normalizar(p.nome).trim()).split(' '))
+  const primeiras = palavras.map((w) => w[0])
+  const ultimas = palavras.map((w) => w[w.length - 1])
   const achados: { predio: Predio; ini: number; fim: number }[] = []
   predios.forEach((p, i) => {
-    const formas = [colapsar(normalizar(p.nome).trim())]
-    if (primeiras.filter((x) => x === primeiras[i]).length === 1) formas.push(primeiras[i])
+    const formas = [palavras[i].join(' ')]
+    const apelido = p.categoria === 'temporada' ? ultimas[i] : primeiras[i]
+    const lista = p.categoria === 'temporada' ? ultimas : primeiras
+    if (!GENERICAS.has(apelido) && !/^\d+$/.test(apelido) && lista.filter((x) => x === apelido).length === 1) formas.push(apelido)
     for (const f of formas) {
       const re = new RegExp(`\\b${f}e?\\b`, 'g')
       for (const m of nc.matchAll(re)) achados.push({ predio: p, ini: m.index!, fim: m.index! + m[0].length })
@@ -93,10 +104,13 @@ export function interpretarComando(transcricao: string | null | undefined, predi
   if (!status) return null
 
   const n = colapsar(normalizar(transcricao))
-  const mencoes = mencoesDePredios(n, predios)
+  const todasMencoes = mencoesDePredios(n, predios)
+  // casas de temporada não têm número: citou a casa, é ela
+  const casas = [...new Map(todasMencoes.filter((m) => m.predio.categoria === 'temporada').map((m) => [m.predio.id, m.predio])).values()]
+  const mencoes = todasMencoes.filter((m) => m.predio.categoria !== 'temporada')
   // tira os nomes dos prédios do texto para o "1" de "Feitosa 1" não virar unidade
   let semNomes = n
-  for (const m of [...mencoes].sort((a, b) => b.ini - a.ini)) semNomes = semNomes.slice(0, m.ini) + ' '.repeat(m.fim - m.ini) + semNomes.slice(m.fim)
+  for (const m of [...todasMencoes].sort((a, b) => b.ini - a.ini)) semNomes = semNomes.slice(0, m.ini) + ' '.repeat(m.fim - m.ini) + semNomes.slice(m.fim)
 
   // números ditos logo depois de "apartamento/sala/…" (aceita lista: "6, 18 e 24")
   const numeros: { numero: string; pos: number }[] = []
@@ -112,10 +126,11 @@ export function interpretarComando(transcricao: string | null | undefined, predi
     for (const num of semNomes.matchAll(/\b\d+\b/g)) numeros.push({ numero: String(Number(num[0])), pos: num.index! })
   }
   const unicos = numeros.filter((x, i) => numeros.findIndex((y) => y.numero === x.numero) === i)
-  if (unicos.length === 0) return null
+  const itensCasas: ItemComando[] = casas.map((c) => ({ numero: c.nome, opcoes: c.unidades.slice(0, 1).map((u) => ({ predio: c, unidade: u })) }))
+  if (unicos.length === 0) return itensCasas.length ? { status, itens: itensCasas } : null
 
   const itens: ItemComando[] = unicos.map(({ numero, pos }) => {
-    const todos: Alvo[] = predios.flatMap((p) => p.unidades.filter((u) => u.numero === numero).map((u) => ({ predio: p, unidade: u })))
+    const todos: Alvo[] = predios.filter((p) => p.categoria !== 'temporada').flatMap((p) => p.unidades.filter((u) => u.numero === numero).map((u) => ({ predio: p, unidade: u })))
     const citados = [...new Set(mencoes.map((m) => m.predio.id))]
     let opcoes = todos
     if (citados.length === 1) opcoes = todos.filter((a) => a.predio.id === citados[0])
@@ -128,6 +143,6 @@ export function interpretarComando(transcricao: string | null | undefined, predi
     return { numero, opcoes }
   })
   // sem "apartamento/sala" na fala, número que não é unidade (dia, hora…) não conta
-  const validos = semGatilho ? itens.filter((i) => i.opcoes.length > 0) : itens
+  const validos = [...(semGatilho ? itens.filter((i) => i.opcoes.length > 0) : itens), ...itensCasas]
   return validos.length ? { status, itens: validos } : null
 }

@@ -5,10 +5,10 @@ import { listarPredios, mudarStatusUnidade, semTabelasDeApartamentos } from '../
 import {
   contagemVagos,
   fileiras,
-  nomeUnidade,
   nomeUnidadePorExtenso,
   porcentagem,
   resumir,
+  rotuloCompleto,
   rotuloStatus,
   type FiltroStatus,
 } from '../lib/apartamentos'
@@ -117,7 +117,7 @@ export function Apartamentos() {
     setPredios((ps) => ps && ps.map((p) => (p.id !== predio.id ? p : { ...p, unidades: p.unidades.map((u) => (u.id === nova.id ? nova : u)) })))
     setMudou(nova.id)
     setFumaca(nova.status === 'vago' ? nova.id : null)
-    const onde = `${predio.nome} · ${nomeUnidade(predio, unidade)}`
+    const onde = rotuloCompleto(predio, unidade)
     setAviso(
       desfazendo
         ? { texto: `${onde} voltou para ${rotuloStatus(nova.status).toLowerCase()}` }
@@ -130,8 +130,13 @@ export function Apartamentos() {
     )
   }
 
-  const geral = useMemo(() => resumir((predios ?? []).flatMap((p) => p.unidades)), [predios])
-  const contagem: Record<FiltroStatus, number> = { todos: geral.total, vago: geral.vagos, ocupado: geral.ocupados }
+  // prédios de locação no resumo e no quadro; casas de temporada numa seção à parte
+  const locacao = useMemo(() => (predios ?? []).filter((p) => p.categoria !== 'temporada'), [predios])
+  const temporada = useMemo(() => (predios ?? []).filter((p) => p.categoria === 'temporada'), [predios])
+  const geral = useMemo(() => resumir(locacao.flatMap((p) => p.unidades)), [locacao])
+  const todas = useMemo(() => resumir((predios ?? []).flatMap((p) => p.unidades)), [predios])
+  const contagem: Record<FiltroStatus, number> = { todos: todas.total, vago: todas.vagos, ocupado: todas.ocupados }
+  const casasVisiveis = temporada.filter((p) => filtro === 'todos' || p.unidades.some((u) => u.status === filtro))
 
   const selecionada = useMemo(() => {
     for (const predio of predios ?? []) {
@@ -145,7 +150,9 @@ export function Apartamentos() {
     <section className="aptos">
       <h2>Apartamentos</h2>
       <p className="sub">
-        {predios?.length ? `${geral.total} unidades em ${predios.length} ${predios.length === 1 ? 'prédio' : 'prédios'}` : 'Controle de vago e ocupado'}
+        {predios?.length
+          ? `${geral.total} unidades em ${locacao.length} ${locacao.length === 1 ? 'prédio' : 'prédios'}${temporada.length ? ` · ${temporada.length} ${temporada.length === 1 ? 'casa' : 'casas'} de temporada` : ''}`
+          : 'Controle de vago e ocupado'}
       </p>
 
       {erro && (
@@ -187,7 +194,7 @@ export function Apartamentos() {
             </div>
 
             <ul className="aptos__medidores" aria-label="Ocupação por prédio">
-              {predios.map((p, i) => {
+              {locacao.map((p, i) => {
                 const r = resumir(p.unidades)
                 return (
                   <li key={p.id}>
@@ -222,7 +229,7 @@ export function Apartamentos() {
           </div>
 
           <div className={`aptos__quadro ${entrando ? 'aptos__quadro--entrando' : ''}`}>
-            {predios.map((p, i) => {
+            {locacao.map((p, i) => {
               const r = resumir(p.unidades)
               const linhas = fileiras(filtro === 'todos' ? p.unidades : p.unidades.filter((u) => u.status === filtro))
               let n = 0
@@ -267,6 +274,43 @@ export function Apartamentos() {
               )
             })}
           </div>
+
+          {temporada.length > 0 && (
+            <section className="temporada" aria-labelledby="temporada-titulo">
+              <header className="temporada__topo">
+                <h3 className="temporada__titulo" id="temporada-titulo">
+                  Casas de temporada
+                </h3>
+                <span className="temporada__conta">
+                  {resumir(temporada.flatMap((p) => p.unidades)).ocupados} de {temporada.length} ocupadas
+                </span>
+              </header>
+              <ul className="temporada__lista">
+                {casasVisiveis.map((p) =>
+                  p.unidades.map((u) => (
+                    <li key={u.id}>
+                      <button
+                        type="button"
+                        className={`temporada__casa temporada__casa--${u.status} ${mudou === u.id ? 'temporada__casa--mudou' : ''}`}
+                        aria-haspopup="dialog"
+                        aria-label={`${p.nome}, casa de temporada: ${rotuloStatus(u.status).toLowerCase()}. Toque para alterar.`}
+                        onClick={() => setAberta(u.id)}
+                      >
+                        <span className="temporada__nome">{p.nome}</span>
+                        <span className="temporada__status">
+                          <i className={`aptos__marca aptos__marca--${u.status}`} aria-hidden="true" />
+                          {rotuloStatus(u.status)}
+                        </span>
+                      </button>
+                    </li>
+                  )),
+                )}
+                {casasVisiveis.length === 0 && (
+                  <li className="aptos__nada">{filtro === 'vago' ? 'Nenhuma casa vaga agora.' : 'Nenhuma casa ocupada agora.'}</li>
+                )}
+              </ul>
+            </section>
+          )}
         </>
       )}
 

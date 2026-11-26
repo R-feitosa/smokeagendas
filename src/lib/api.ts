@@ -108,7 +108,7 @@ const COLUNAS_UNIDADE = 'id, predio_id, numero, status, status_desde, atualizado
 /** Prédios (na ordem cadastrada) com as unidades em ordem de porta. Dados do escritório: todos os habilitados veem o mesmo. */
 export async function listarPredios(): Promise<Predio[]> {
   const [predios, unidades] = await Promise.all([
-    supabase.from('predios').select('id, nome, tipo_unidade, ordem').order('ordem').order('nome'),
+    supabase.from('predios').select('id, nome, tipo_unidade, categoria, ordem').order('ordem').order('nome'),
     supabase.from('unidades').select(COLUNAS_UNIDADE),
   ])
   if (predios.error) throw predios.error

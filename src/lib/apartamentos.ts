@@ -54,12 +54,19 @@ export function contagemVagos(n: number): string {
 const ROTULO_STATUS: Record<StatusUnidade, string> = { vago: 'Vago', ocupado: 'Ocupado' }
 export const rotuloStatus = (s: StatusUnidade): string => ROTULO_STATUS[s]
 
-/** "Apto 304" | "Sala 102" */
-export function nomeUnidade(predio: Pick<Predio, 'tipo_unidade'>, unidade: Pick<Unidade, 'numero'>): string {
+/** "Apto 304" | "Sala 102" | casa de temporada: o nome do imóvel */
+export function nomeUnidade(predio: Pick<Predio, 'tipo_unidade' | 'nome'>, unidade: Pick<Unidade, 'numero'>): string {
+  if (predio.tipo_unidade === 'imovel') return predio.nome
   return `${predio.tipo_unidade === 'sala' ? 'Sala' : 'Apto'} ${unidade.numero}`
 }
 
+/** "Feitosa 2 · Apto 304" | "Casa da Serra" */
+export function rotuloCompleto(predio: Pick<Predio, 'tipo_unidade' | 'nome'>, unidade: Pick<Unidade, 'numero'>): string {
+  return predio.tipo_unidade === 'imovel' ? predio.nome : `${predio.nome} · ${nomeUnidade(predio, unidade)}`
+}
+
 /** Por extenso, para leitores de tela: "Apartamento 304" | "Sala 102" */
-export function nomeUnidadePorExtenso(predio: Pick<Predio, 'tipo_unidade'>, unidade: Pick<Unidade, 'numero'>): string {
+export function nomeUnidadePorExtenso(predio: Pick<Predio, 'tipo_unidade' | 'nome'>, unidade: Pick<Unidade, 'numero'>): string {
+  if (predio.tipo_unidade === 'imovel') return predio.nome
   return `${predio.tipo_unidade === 'sala' ? 'Sala' : 'Apartamento'} ${unidade.numero}`
 }

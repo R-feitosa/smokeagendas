@@ -18,6 +18,7 @@ for teste in tests/db/*_test.sql; do
      && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/migrations/0005_equipe.sql \
      && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/migrations/0006_responsavel_no_lembrete.sql \
      && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/migrations/0007_apartamentos.sql \
+     && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/migrations/0008_casas_temporada.sql \
      && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f "$teste"; then :; else falhas=$((falhas + 1)); fi
   dropdb --if-exists "$DB"
 done

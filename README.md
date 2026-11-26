@@ -50,7 +50,8 @@ agenda-voz/
     │   ├── 0004_projecao_recorrencia.sql projetar_ocorrencias(): repetições futuras p/ o calendário
     │   ├── 0005_equipe.sql       perfis.equipe + eventos.responsavel (filtro Minha | Equipe)
     │   ├── 0006_responsavel_no_lembrete.sql  lembrete sai com o responsável (título do push)
-    │   └── 0007_apartamentos.sql  prédios + unidades (vago|ocupado) + histórico; carga da planilha
+    │   ├── 0007_apartamentos.sql  prédios + unidades (vago|ocupado) + histórico; carga da planilha
+    │   └── 0008_casas_temporada.sql  predios.categoria + 5 casas de temporada (1 unidade cada)
     └── functions/
         ├── _shared/cors.ts
         ├── agenda-process-audio/ transcrever.ts → extrair.ts → validar.ts → rascunho
@@ -70,7 +71,7 @@ compartilháveis têm prefixo próprio:
 | Job do pg_cron | `agenda-enviar-lembretes` |
 | Vault | `agenda_cron_secret` (gerado no banco), `agenda_project_url` |
 | Secrets das funções | `AGENDA_GROQ_API_KEY` (ou `AGENDA_OPENAI_API_KEY`), `AGENDA_VAPID_PUBLIC_KEY`, `AGENDA_VAPID_PRIVATE_KEY`, `AGENDA_VAPID_SUBJECT`, `AGENDA_ALLOWED_ORIGINS` |
-| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`, `agenda_0007_apartamentos` |
+| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`, `agenda_0007_apartamentos`, `agenda_0008_casas_temporada` |
 
 **Único ponto compartilhado: o login.** Os usuários ficam no Authentication do rf-ops,
 mas estar lá **não dá acesso** à agenda. Só usa o app quem for habilitado:
@@ -91,8 +92,8 @@ delete from agenda.perfis where id = (select id from auth.users where email = 'f
    npm install
    cp .env.example .env
    ```
-2. **Banco** — já aplicado no rf-ops (`agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`, `agenda_0007_apartamentos`).
-   Para um ambiente novo, rode `supabase/migrations/0001` → `0002` → `0003` → `0004` → `0005` → `0006` → `0007` no SQL Editor e depois:
+2. **Banco** — já aplicado no rf-ops (`agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_projecao_recorrencia`, `agenda_0005_equipe`, `agenda_0006_responsavel_no_lembrete`, `agenda_0007_apartamentos`, `agenda_0008_casas_temporada`).
+   Para um ambiente novo, rode `supabase/migrations/0001` → `0002` → `0003` → `0004` → `0005` → `0006` → `0007` → `0008` no SQL Editor e depois:
    ```sql
    select vault.create_secret('https://SEU_REF.supabase.co', 'agenda_project_url');
    ```
@@ -152,7 +153,15 @@ isso"* desfaz e segue como compromisso. Fala sem status (ex.: "vistoria no 304 a
 virando compromisso.
 
 A carga inicial veio da planilha de 25/11/2026: 68 unidades (Feitosa 1 = 11, Feitosa 2 = 16,
-Feitosa 3 = 34, Connect Office = 7), 8 vagas. Unidades da carga não têm "vago desde": a data só
+Feitosa 3 = 34, Connect Office = 7), 8 vagas.
+
+**Casas de temporada** (0008, 26/11/2026): Escritório Moradas, Residência Roneely, Casa da Serra,
+Casa Camocim e Apartamento de Fortaleza ficam numa seção separada, abaixo dos prédios, e **não entram**
+no resumo de ocupação da locação. Cada uma é um `predios` com `categoria = 'temporada'`,
+`tipo_unidade = 'imovel'` e uma única unidade (`numero = '1'`). Entraram como vagas. Por voz, basta o
+nome: *"a Casa da Serra está ocupada"* (também "Camocim", "Moradas", "Roneely", "Fortaleza").
+Nova casa: `insert into agenda.predios (nome, tipo_unidade, categoria, ordem) values ('Casa X', 'imovel', 'temporada', 106);`
+e depois a unidade `'1'` dela em `agenda.unidades`. Unidades da carga não têm "vago desde": a data só
 passa a existir quando o status é alterado no app.
 
 Cadastro é administrativo (SQL Editor do rf-ops); o app não cria nem apaga unidade:

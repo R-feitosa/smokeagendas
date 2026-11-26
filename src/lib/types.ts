@@ -56,7 +56,10 @@ export type Unidade = {
 export type Predio = {
   id: string
   nome: string
-  tipo_unidade: 'apartamento' | 'sala'
+  /** 'imovel' = casa de temporada: uma unidade só, chamada pelo nome do imóvel */
+  tipo_unidade: 'apartamento' | 'sala' | 'imovel'
+  /** locacao = prédio de apartamentos/salas; temporada = casa de temporada */
+  categoria: 'locacao' | 'temporada'
   ordem: number
   unidades: Unidade[]
 }

@@ -19,17 +19,21 @@ grant select on _u to anon, authenticated, service_role;
 
 -- ---------- Carga inicial = planilha ----------
 insert into _resultado select 'carga: 4 prédios na ordem da planilha',
-  (select array_agg(nome order by ordem) from predios) = array['Feitosa 1', 'Feitosa 2', 'Feitosa 3', 'Connect Office'];
+  (select array_agg(nome order by ordem) from predios where categoria = 'locacao') = array['Feitosa 1', 'Feitosa 2', 'Feitosa 3', 'Connect Office'];
 insert into _resultado select 'carga: 68 unidades (11 + 16 + 34 + 7)',
   (select array_agg(n order by ordem)
-     from (select p.ordem, count(*) as n from unidades u join predios p on p.id = u.predio_id group by p.ordem) x)
+     from (select p.ordem, count(*) as n from unidades u join predios p on p.id = u.predio_id where p.categoria = 'locacao' group by p.ordem) x)
   = array[11, 16, 34, 7]::bigint[];
 insert into _resultado select 'carga: exatamente as 8 vagas da planilha',
   (select array_agg(p.nome || ' ' || u.numero order by p.ordem, u.numero::int)
-     from unidades u join predios p on p.id = u.predio_id where u.status = 'vago')
+     from unidades u join predios p on p.id = u.predio_id where u.status = 'vago' and p.categoria = 'locacao')
   = array['Feitosa 2 304', 'Feitosa 3 6', 'Feitosa 3 18', 'Feitosa 3 24',
           'Connect Office 102', 'Connect Office 104', 'Connect Office 201', 'Connect Office 202'];
 insert into _resultado select 'carga: as outras 60 estão ocupadas', (select count(*) = 60 from unidades where status = 'ocupado');
+insert into _resultado select '0008: 5 casas de temporada, 1 unidade cada, todas vagas',
+  (select array_agg(p.nome || ':' || u.numero || ':' || u.status order by p.ordem) from unidades u join predios p on p.id = u.predio_id where p.categoria = 'temporada')
+  = array['Escritório Moradas:1:vago', 'Residência Roneely:1:vago', 'Casa da Serra:1:vago', 'Casa Camocim:1:vago', 'Apartamento de Fortaleza:1:vago']
+  and (select bool_and(tipo_unidade = 'imovel') from predios where categoria = 'temporada');
 insert into _resultado select 'carga: Feitosa 1 tem as unidades 1, 3 e 4 (sem a 2)',
   (select array_agg(u.numero order by u.numero::int) from unidades u join predios p on p.id = u.predio_id
     where p.nome = 'Feitosa 1' and u.numero::int < 100) = array['1', '3', '4'];
@@ -44,7 +48,7 @@ insert into _resultado select 'carga: sem data de início inventada e histórico
 set role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000a', false) \g /dev/null
 insert into _resultado select 'habilitada vê os 4 prédios e as 68 unidades',
-  (select count(*) = 4 from predios) and (select count(*) = 68 from unidades);
+  (select count(*) = 9 from predios) and (select count(*) = 73 from unidades);
 
 update unidades set status = 'vago' where id = (select id from _u);
 insert into _resultado select 'liberar (ocupado → vago) carimba quando e quem',
@@ -55,7 +59,7 @@ insert into _resultado select 'a mudança vai para o histórico',
   (select count(*) = 1 and bool_and(status_anterior = 'ocupado' and status_novo = 'vago'
                                      and alterado_por = auth.uid() and alterado_por_nome = 'Ana')
      from unidades_historico where unidade_id = (select id from _u));
-insert into _resultado select 'só a unidade tocada mudou (agora 9 vagas)', (select count(*) = 9 from unidades where status = 'vago');
+insert into _resultado select 'só a unidade tocada mudou (agora 9 vagas)', (select count(*) = 9 from unidades u join predios p on p.id = u.predio_id where u.status = 'vago' and p.categoria = 'locacao');
 
 -- marcar o mesmo status de novo não é mudança: não recarimba nem gera histórico
 create temp table _antes as select status_desde from unidades where id = (select id from _u);
@@ -141,7 +145,7 @@ insert into _resultado select 'não habilitado não vê prédios, unidades nem h
 update unidades set status = 'vago';   -- RLS: não alcança nenhuma linha
 reset role;
 insert into _resultado select 'não habilitado não altera status (seguem as 8 vagas da planilha)',
-  (select count(*) = 8 from unidades where status = 'vago') and (select count(*) = 2 from unidades_historico);
+  (select count(*) = 13 from unidades where status = 'vago') and (select count(*) = 2 from unidades_historico);
 
 -- anon não enxerga o schema
 set role anon;
@@ -164,7 +168,7 @@ set role service_role;
 insert into unidades (predio_id, numero) select id, '900' from predios where nome = 'Feitosa 1';
 delete from unidades where numero = '900';
 reset role;
-insert into _resultado select 'service_role cadastra e remove unidade', (select count(*) = 68 from unidades);
+insert into _resultado select 'service_role cadastra e remove unidade', (select count(*) = 73 from unidades);
 
 -- desabilitar a pessoa não apaga o rastro: fica o nome
 delete from perfis where nome = 'Bia';
@@ -173,8 +177,9 @@ insert into _resultado select 'desabilitar alguém mantém o histórico com o no
 
 -- ---------- Idempotência: aplicar a 0007 de novo ----------
 \i supabase/migrations/0007_apartamentos.sql
+\i supabase/migrations/0008_casas_temporada.sql
 insert into _resultado select 'reaplicar não duplica prédios nem unidades',
-  (select count(*) = 4 from predios) and (select count(*) = 68 from unidades);
+  (select count(*) = 9 from predios) and (select count(*) = 73 from unidades);
 insert into _resultado select 'reaplicar não sobrescreve status alterado no app nem o histórico',
   (select status = 'vago' and atualizado_em is not null from unidades where id = (select id from _u))
   and (select count(*) = 3 from unidades_historico);

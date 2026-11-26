@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { mudarStatusUnidade } from '../lib/api'
-import { nomeUnidade, rotuloStatus } from '../lib/apartamentos'
+import { rotuloCompleto, rotuloStatus } from '../lib/apartamentos'
 import type { Alvo, ComandoApartamento } from '../lib/comandoApartamento'
 import type { StatusUnidade } from '../lib/types'
 
@@ -21,7 +21,7 @@ type Props = {
   onGravarOutro: () => void
 }
 
-const onde = (a: Alvo) => `${a.predio.nome} · ${nomeUnidade(a.predio, a.unidade)}`
+const onde = (a: Alvo) => rotuloCompleto(a.predio, a.unidade)
 
 /**
  * Resultado do comando de voz da aba Apartamentos. O que foi entendido sem dúvida é
