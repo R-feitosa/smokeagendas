@@ -188,9 +188,12 @@ cabeçalho (locatário, data, cidade, locador), **1 Quarto** (7 itens) e **2 Ban
 - Unidade que já estava vaga: botão **Vistoria de saída (checklist)** na folha da unidade.
 - Salva sozinha a cada toque. **Concluir** exige os 18 itens avaliados e descrição em todo item *Ruim*;
   concluída fica travada (trigger), com vistoriador e data.
-- **Gerar PDF** (vistoria concluída): monta a ficha no formato do papel da Feitosa (`src/components/VistoriaDocumento.tsx`,
-  estilos `.doc` em `styles.css`, A4) e abre a impressão do navegador: imprimir ou "Salvar como PDF". Linhas de
-  assinatura em branco para assinar à mão; o arquivo sugerido sai como "Vistoria de saída - <unidade> - <data>".
+- **Documento só no fim**: concluir exige tudo conferido (itens avaliados, avaria descrita em todo "Ruim",
+  cada item do checklist operacional marcado ou com observação, nome do locatário). Concluída, abre o painel
+  **Documento pronto** com a prévia das páginas e os botões **Baixar PDF**, **Enviar para o cliente** (abre o
+  Compartilhar do celular: WhatsApp, e-mail…) e **Imprimir**. O PDF reproduz a ficha de papel de cada modelo
+  (`src/components/VistoriaDocumento.tsx`) e é gerado no aparelho (`src/lib/pdfVistoria.ts`, jsPDF + html2canvas,
+  carregados só nessa hora). Nome do arquivo: "Vistoria de saida - AP 304 - FEITOSA II - 26-11-2026.pdf".
 - Aba **Vistorias** na barra de baixo (e atalho no painel Hoje): a fazer e concluídas.
 
 ## Aba Hoje (painel do dia)

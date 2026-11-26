@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { VistoriaDocumento } from '../components/VistoriaDocumento'
+import { DocumentoPronto } from '../components/DocumentoPronto'
 import { concluirVistoria, obterVistoria, salvarVistoria, type CamposVistoria, type VistoriaComUnidade } from '../lib/api'
 import {
   AVALIACOES,
@@ -11,21 +11,6 @@ import {
   sugerirPendencias,
   type Avaliacao,
 } from '../lib/vistoria'
-
-/**
- * Abre a impressão do navegador com a ficha (componente VistoriaDocumento). O título da
- * página vira o nome sugerido do arquivo: "Vistoria de saída - Feitosa 2 · Apto 304 - 2026-11-18".
- */
-function gerarPdf(v: VistoriaComUnidade, unidade: string) {
-  const antes = document.title
-  document.title = `Vistoria de saída - ${unidade} - ${v.data_vistoria}`
-  const voltar = () => {
-    document.title = antes
-    window.removeEventListener('afterprint', voltar)
-  }
-  window.addEventListener('afterprint', voltar)
-  window.print()
-}
 
 type Gravacao = 'salvo' | 'salvando' | 'pendente' | 'erro'
 const ESPERA_MS = 700 // junta toques seguidos num único salvamento
@@ -91,7 +76,7 @@ export function Vistoria() {
   if (!v) return <section><p className="vazio">Carregando…</p></section>
 
   const travada = v.status === 'concluida'
-  const p = progresso(v)
+  const p = progresso(v) // inclui operacional e locatário: só conclui com tudo conferido
   const modelo = modeloDe(v)
   const unidade = rotuloUnidade(v.predio_nome, v.numero, v.tipo_unidade)
 
@@ -134,17 +119,8 @@ export function Vistoria() {
       <h2 className="vist__titulo">{unidade}</h2>
       <p className="sub">{modelo.subtitulo}</p>
 
-      {travada && (
-        <div className="vist__concluida" role="status">
-          ✓ Concluída em {dataBr(v.data_vistoria)}
-          {v.vistoriador_nome ? ` por ${v.vistoriador_nome}` : ''}.
-          <button type="button" className="btn vist__pdf" onClick={() => gerarPdf(v!, unidade)}>
-            Gerar PDF
-          </button>
-          <small className="vist__pdf-dica">Abre a impressão: escolha a impressora ou “Salvar como PDF”.</small>
-        </div>
-      )}
-      {travada && <VistoriaDocumento v={v} />}
+      {/* o documento só existe depois de concluída a vistoria (tudo preenchido) */}
+      {travada && <DocumentoPronto v={v} />}
 
       {!travada && (
         <div className="vist__barra" aria-live="polite">

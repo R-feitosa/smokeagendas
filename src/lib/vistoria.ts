@@ -240,9 +240,18 @@ export type Progresso = {
 }
 
 /** Quanto falta: todo item avaliado; item "Ruim" exige observação (como pede o PDF) */
-export function progresso(v: Pick<Vistoria, 'respostas'> & Partial<Pick<Vistoria, 'modelo'>>): Progresso {
+/**
+ * Só conclui (e só então gera o documento) com TUDO conferido:
+ *   - todos os itens avaliados, e todo item "Ruim" com a avaria descrita;
+ *   - quando a vistoria completa é passada (operacional/locatário presentes): cada item do
+ *     checklist operacional marcado OU com observação (ex.: "Não consta"), e o nome do locatário.
+ */
+export function progresso(
+  v: Pick<Vistoria, 'respostas'> & Partial<Pick<Vistoria, 'modelo' | 'operacional' | 'locatario'>>,
+): Progresso {
   const r = v.respostas ?? {}
-  const secoes = modeloDe({ modelo: v.modelo ?? 'saida_v1' }).secoes
+  const modelo = modeloDe({ modelo: v.modelo ?? 'saida_v1' })
+  const secoes = modelo.secoes
   const TODOS_ITENS = secoes.flatMap((s) => s.itens)
   const avaliados = TODOS_ITENS.filter((i) => r[i.id]?.avaliacao).length
   const ruins = secoes.flatMap((s) => s.itens.filter((i) => r[i.id]?.avaliacao === 'ruim').map((i) => ({ ...i, secao: s.titulo })))
@@ -251,6 +260,13 @@ export function progresso(v: Pick<Vistoria, 'respostas'> & Partial<Pick<Vistoria
   if (semNota > 0) faltando.push(`${semNota} ${semNota === 1 ? 'item sem avaliação' : 'itens sem avaliação'}`)
   const ruimSemObs = ruins.filter((i) => !r[i.id]?.obs?.trim()).length
   if (ruimSemObs > 0) faltando.push(`${ruimSemObs} ${ruimSemObs === 1 ? 'item ruim sem descrição da avaria' : 'itens ruins sem descrição da avaria'}`)
+  if (v.operacional !== undefined) {
+    const o = v.operacional ?? {}
+    const operSemResposta = modelo.operacional.filter((i) => !o[i.id]?.ok && !o[i.id]?.obs?.trim()).length
+    if (operSemResposta > 0)
+      faltando.push(`${operSemResposta} ${operSemResposta === 1 ? 'item do checklist operacional sem marcar' : 'itens do checklist operacional sem marcar'} (marque ou escreva a observação)`)
+  }
+  if (v.locatario !== undefined && !v.locatario?.trim()) faltando.push('o nome do locatário')
   return { avaliados, total: TODOS_ITENS.length, ruins, faltando }
 }
 

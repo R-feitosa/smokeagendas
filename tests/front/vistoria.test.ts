@@ -62,3 +62,16 @@ test('casa: item ruim sugere pendência com o nome da seção', () => {
   assert.equal(sugerirPendencias({ modelo: 'temporada_v1', respostas }), 'Cozinha e eletrodomésticos: liquidificador (não liga).')
   assert.equal(rotuloUnidade('Casa da Serra', '1', 'imovel'), 'Casa da Serra')
 })
+
+test('para concluir: checklist operacional respondido (marcado ou com observação) e locatário preenchido', () => {
+  const respostas: Record<string, RespostaItem> = {}
+  for (const s of SECOES) for (const i of s.itens) respostas[i.id] = { avaliacao: 'otimo' }
+  const base = { modelo: 'saida_v1', respostas, locatario: '', operacional: {} }
+  assert.deepEqual(progresso(base).faltando, [
+    '6 itens do checklist operacional sem marcar (marque ou escreva a observação)',
+    'o nome do locatário',
+  ])
+  const operacional = Object.fromEntries(OPERACIONAL.map((o) => [o.id, { ok: true }]))
+  operacional.avarias = { obs: 'Não consta' } // como na ficha: sem marcar, mas com observação
+  assert.deepEqual(progresso({ ...base, locatario: 'Fulana', operacional }).faltando, [])
+})
