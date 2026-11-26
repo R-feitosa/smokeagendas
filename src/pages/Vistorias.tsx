@@ -45,7 +45,7 @@ export function Vistorias() {
   return (
     <section>
       <h2>Vistorias</h2>
-      <p className="sub">Checklist de saída: abre sozinho quando uma unidade de locação fica vaga.</p>
+      <p className="sub">Checklist de saída: abre sozinho quando um apartamento, sala ou casa de temporada fica vago.</p>
       {erro && <p className="erro">{erro}</p>}
       {!lista && !erro && <p className="vazio">Carregando…</p>}
       {lista && (

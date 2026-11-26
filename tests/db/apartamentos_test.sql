@@ -183,6 +183,8 @@ insert into _resultado select 'desabilitar alguém mantém o histórico com o no
 \i supabase/migrations/0007_apartamentos.sql
 \i supabase/migrations/0008_casas_temporada.sql
 \i supabase/migrations/0009_casas_so_saulo.sql
+\i supabase/migrations/0010_vistorias.sql
+\i supabase/migrations/0011_vistoria_temporada.sql
 insert into _resultado select 'reaplicar não duplica prédios nem unidades',
   (select count(*) = 9 from predios) and (select count(*) = 73 from unidades);
 insert into _resultado select 'reaplicar não sobrescreve status alterado no app nem o histórico',

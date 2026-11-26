@@ -43,14 +43,16 @@ update unidades set status = 'vago' where id = (select f2_101 from _u);
 insert into _resultado select 'vistoria já preenchida não se perde, e não duplica ao vagar de novo',
   (select count(*) = 1 from vistorias where unidade_id = (select f2_101 from _u));
 
--- casa de temporada não gera vistoria
+-- casa de temporada (0011): também gera, com o modelo da casa
 update unidades set status = 'ocupado' where id = (select casa from _u);
 update unidades set status = 'vago' where id = (select casa from _u);
-insert into _resultado select 'casa de temporada não gera vistoria', (select count(*) = 0 from vistorias where unidade_id = (select casa from _u));
+insert into _resultado select 'casa de temporada vagou → vistoria com modelo temporada_v1',
+  (select count(*) = 1 and bool_and(modelo = 'temporada_v1') from vistorias where unidade_id = (select casa from _u));
 
 -- iniciar à mão: só em unidade vaga de locação
 insert into vistorias (unidade_id) select f2_304 from _u;   -- 304 está vaga desde a carga
-insert into _resultado select 'iniciar à mão em unidade vaga (304)', (select count(*) = 1 from vistorias where unidade_id = (select f2_304 from _u));
+insert into _resultado select 'iniciar à mão em unidade vaga (304), modelo de apartamento',
+  (select count(*) = 1 and bool_and(modelo = 'saida_v1') from vistorias where unidade_id = (select f2_304 from _u));
 do $$ begin
   insert into agenda.vistorias (unidade_id) select id from agenda.unidades u
    where u.status = 'ocupado' and u.predio_id = (select id from agenda.predios where nome = 'Feitosa 1') limit 1;
@@ -115,7 +117,8 @@ end $$;
 reset role;
 
 \i supabase/migrations/0010_vistorias.sql
-insert into _resultado select 'reaplicar 0010 não duplica nem apaga', (select count(*) = 3 from vistorias);
+\i supabase/migrations/0011_vistoria_temporada.sql
+insert into _resultado select 'reaplicar 0010/0011 não duplica nem apaga', (select count(*) = 4 from vistorias);
 
 \echo
 select case when ok then 'PASSOU' else 'FALHOU' end as resultado, teste from _resultado;

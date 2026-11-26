@@ -3,10 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import { concluirVistoria, obterVistoria, salvarVistoria, type CamposVistoria, type VistoriaComUnidade } from '../lib/api'
 import {
   AVALIACOES,
-  DECLARACAO,
-  OPERACIONAL,
-  SECOES,
   dataBr,
+  modeloDe,
   progresso,
   rotuloUnidade,
   sugerirPendencias,
@@ -78,6 +76,7 @@ export function Vistoria() {
 
   const travada = v.status === 'concluida'
   const p = progresso(v)
+  const modelo = modeloDe(v)
   const unidade = rotuloUnidade(v.predio_nome, v.numero, v.tipo_unidade)
 
   function avaliar(item: string, avaliacao: Avaliacao) {
@@ -117,7 +116,7 @@ export function Vistoria() {
       <Link to="/vistorias" className="vist__voltar">‹ Vistorias</Link>
       <p className="vist__marca">Checklist de vistoria de saída</p>
       <h2 className="vist__titulo">{unidade}</h2>
-      <p className="sub">Registro das condições aparentes do imóvel na data da vistoria</p>
+      <p className="sub">{modelo.subtitulo}</p>
 
       {travada && (
         <div className="vist__concluida" role="status">
@@ -172,11 +171,27 @@ export function Vistoria() {
         </p>
       )}
 
-      {SECOES.map((s) => (
+      {modelo.secoes.map((s) => (
         <fieldset key={s.id} className="vist__secao">
           <legend>
             {s.titulo} <small>— {s.subtitulo}</small>
           </legend>
+          {!travada && s.itens.some((i) => !v.respostas[i.id]?.avaliacao) && (
+            <button
+              type="button"
+              className="vist__tudo"
+              onClick={() =>
+                mudar({
+                  respostas: {
+                    ...v.respostas,
+                    ...Object.fromEntries(s.itens.filter((i) => !v.respostas[i.id]?.avaliacao).map((i) => [i.id, { ...v.respostas[i.id], avaliacao: 'otimo' as const }])),
+                  },
+                })
+              }
+            >
+              Marcar o resto como Ótimo ({s.itens.filter((i) => !v.respostas[i.id]?.avaliacao).length})
+            </button>
+          )}
           {s.itens.map((item) => {
             const r = v.respostas[item.id] ?? {}
             const ruim = r.avaliacao === 'ruim'
@@ -224,8 +239,8 @@ export function Vistoria() {
       ))}
 
       <fieldset className="vist__secao">
-        <legend>3 Checklist operacional de saída</legend>
-        {OPERACIONAL.map((o) => {
+        <legend>{modelo.secoes.length + 1} Checklist operacional de saída</legend>
+        {modelo.operacional.map((o) => {
           const r = v.operacional[o.id] ?? {}
           return (
             <div key={o.id} className="vist__oper">
@@ -252,7 +267,7 @@ export function Vistoria() {
       </fieldset>
 
       <fieldset className="vist__secao">
-        <legend>4 Pendências e observações finais</legend>
+        <legend>{modelo.secoes.length + 2} Pendências e observações finais</legend>
         <textarea
           rows={4}
           value={v.pendencias ?? ''}
@@ -272,8 +287,8 @@ export function Vistoria() {
       </fieldset>
 
       <fieldset className="vist__secao">
-        <legend>5 Declaração</legend>
-        <p className="vist__declaracao">{DECLARACAO}</p>
+        <legend>{modelo.secoes.length + 3} Declaração</legend>
+        <p className="vist__declaracao">{modelo.declaracao}</p>
         <p className="sub">
           {v.cidade}, {dataBr(v.data_vistoria)}.{' '}
           {travada ? `Vistoriador: ${v.vistoriador_nome ?? '—'}.` : 'Ao concluir, seu nome fica registrado como vistoriador.'}

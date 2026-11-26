@@ -53,7 +53,8 @@ agenda-voz/
     │   ├── 0007_apartamentos.sql  prédios + unidades (vago|ocupado) + histórico; carga da planilha
     │   ├── 0008_casas_temporada.sql  predios.categoria + 5 casas de temporada (1 unidade cada)
     │   ├── 0009_casas_so_saulo.sql  só o Saulo muda o status das casas (predios.editavel_por + policy)
-    │   └── 0010_vistorias.sql     vistoria de saída: tabela, abre ao vagar, trava ao concluir
+    │   ├── 0010_vistorias.sql     vistoria de saída: tabela, abre ao vagar, trava ao concluir
+    │   └── 0011_vistoria_temporada.sql  casas de temporada também (modelo temporada_v1)
     └── functions/
         ├── _shared/cors.ts
         ├── agenda-process-audio/ transcrever.ts → extrair.ts → validar.ts → rascunho
@@ -177,13 +178,17 @@ cabeçalho (locatário, data, cidade, locador), **1 Quarto** (7 itens) e **2 Ban
 Ótimo / Bom / Ruim / N/A + observação, **3 Checklist operacional** (6 itens), **4 Pendências** e
 **5 Declaração**. Modelo em `src/lib/vistoria.ts` (`saida_v1`); respostas em `agenda.vistorias` (0010).
 
-- Unidade de **locação** marcada como **vaga** → o banco abre a vistoria; o aviso da aba mostra *Fazer vistoria*.
-  Casas de temporada não geram vistoria.
+- Unidade marcada como **vaga** → o banco abre a vistoria; o aviso da aba mostra *Fazer vistoria*.
+- **Dois modelos**, escolhidos pelo banco conforme o imóvel: `saida_v1` (apartamento/sala, PDF do AP 304) e
+  `temporada_v1` (casa de temporada, PDF da Casa da Serra de 22/11/2026: Acessos e áreas externas 15 itens,
+  Estrutura e acabamentos 17, Cozinha e eletrodomésticos 20, Mobiliário e enxoval 16, operacional 6).
+  As 5 casas usam o mesmo modelo; item que não existe na casa vai como N/A.
+- Cada seção tem **Marcar o resto como Ótimo** (só preenche o que está em branco).
 - *Desfazer* com a vistoria ainda em branco → ela é apagada. Com algo preenchido, fica.
 - Unidade que já estava vaga: botão **Vistoria de saída (checklist)** na folha da unidade.
 - Salva sozinha a cada toque. **Concluir** exige os 18 itens avaliados e descrição em todo item *Ruim*;
   concluída fica travada (trigger), com vistoriador e data, e pode ser impressa/salva em PDF.
-- Lista em **/vistorias** (atalho no painel Hoje): a fazer e concluídas.
+- Aba **Vistorias** na barra de baixo (e atalho no painel Hoje): a fazer e concluídas.
 
 ## Aba Hoje (painel do dia)
 

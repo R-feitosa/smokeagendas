@@ -142,8 +142,8 @@ export function Apartamentos() {
             },
           },
     )
-    // vagou (locação): o banco já abriu a vistoria de saída; o aviso ganha o atalho
-    if (!desfazendo && nova.status === 'vago' && predio.categoria !== 'temporada') {
+    // vagou: o banco já abriu a vistoria de saída (modelo da casa ou do apartamento); o aviso ganha o atalho
+    if (!desfazendo && nova.status === 'vago') {
       vistoriaAbertaDaUnidade(nova.id)
         .then((vid) => vid && setAviso((a) => (a && !a.vistoria ? { ...a, texto: `${onde} está vago: faça a vistoria de saída`, vistoria: vid } : a)))
         .catch(() => {})
@@ -341,7 +341,7 @@ export function Apartamentos() {
           unidade={selecionada.unidade}
           onMudar={(status) => mudar(selecionada.predio, selecionada.unidade, status)}
           onFechar={() => setAberta(null)}
-          onVistoria={selecionada.predio.categoria !== 'temporada' && selecionada.unidade.status === 'vago' ? () => abrirVistoria(selecionada.unidade) : undefined}
+          onVistoria={selecionada.unidade.status === 'vago' ? () => abrirVistoria(selecionada.unidade) : undefined}
         />
       )}
 

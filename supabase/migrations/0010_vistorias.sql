@@ -51,6 +51,7 @@ comment on table agenda.vistorias is 'Vistoria de saída (checklist) criada quan
 -- Unidade vagou / voltou a ocupar → abre / limpa a vistoria
 -- SECURITY DEFINER: o app não tem INSERT/DELETE em vistorias; só este trigger cria/apaga.
 -- ---------------------------------------------------------------
+-- ATENÇÃO: a 0011 substitui esta função (casas de temporada também). Reaplicou a 0010? Reaplique a 0011.
 create or replace function agenda.unidades_vistoria() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin

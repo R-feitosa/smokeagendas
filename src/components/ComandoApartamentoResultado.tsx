@@ -137,7 +137,7 @@ export function ComandoApartamentoResultado({ comando, transcricao, onEraComprom
             {desfazendo ? 'Desfazendo…' : 'Desfazer'}
           </button>
         )}
-        {status === 'vago' && !desfeito && feitos.some((l) => l.alvo.predio.categoria !== 'temporada') ? (
+        {status === 'vago' && !desfeito && feitos.length > 0 ? (
           <Link to="/vistorias" className="btn">
             Fazer vistoria
           </Link>
