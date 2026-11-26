@@ -142,6 +142,15 @@ placa por unidade. **Tocar na placa** abre a folha com *Vago* e *Ocupado*; escol
 mostra "Desfazer" por alguns segundos e registra quem mudou e quando. O filtro *Todos · Vagos · Ocupados*
 mostra só o que interessa. A lista recarrega ao voltar para a tela (outra pessoa pode ter alterado).
 
+**Por voz (aba Gravar):** diga, por exemplo, *"o apartamento 304 do Feitosa 2 está desocupado"*. A
+transcrição que a função de áudio já devolve é lida no app (`src/lib/comandoApartamento.ts`, sem IA
+extra e sem mudar o servidor): se tiver uma palavra de status (vago, desocupado, liberado, entregou
+as chaves… / ocupado, alugado, locado…; "não está mais vago" inverte) e um número de unidade, o status
+é gravado na hora, com *Desfazer*. Aceita vários números ("6, 18 e 24 do Feitosa 3") e número por
+extenso. Se o número existe em mais de um prédio e nenhum foi dito, a tela pergunta qual. *"Não era
+isso"* desfaz e segue como compromisso. Fala sem status (ex.: "vistoria no 304 amanhã") continua
+virando compromisso.
+
 A carga inicial veio da planilha de 25/11/2026: 68 unidades (Feitosa 1 = 11, Feitosa 2 = 16,
 Feitosa 3 = 34, Connect Office = 7), 8 vagas. Unidades da carga não têm "vago desde": a data só
 passa a existir quando o status é alterado no app.

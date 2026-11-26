@@ -1,19 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ComandoApartamentoResultado } from '../components/ComandoApartamentoResultado'
 import { ConfirmEvento } from '../components/ConfirmEvento'
 import { Fumaca, type FumacaHandle } from '../components/Fumaca'
 import { Recorder } from '../components/Recorder'
-import { criarEvento, processarAudio } from '../lib/api'
+import { criarEvento, listarPredios, processarAudio } from '../lib/api'
+import { interpretarComando, type ComandoApartamento } from '../lib/comandoApartamento'
 import { detectarResponsavel, useEquipe } from '../lib/equipe'
 import type { Rascunho } from '../lib/types'
 
-type Etapa = 'gravar' | 'processando' | 'confirmar'
+type Etapa = 'gravar' | 'processando' | 'confirmar' | 'apartamento'
 
 const EXEMPLOS = [
   'Reunião com o cliente sexta às 15h, me avisa 30 minutos antes',
   'Pagar o boleto do condomínio amanhã às 9h',
   'Audiência dia 12 às 14h, me lembra 1 dia antes',
   'Revisão do caixa toda segunda às 8h',
+  'O apartamento 304 do Feitosa 2 está desocupado',
 ]
 
 export function Gravar() {
@@ -21,6 +24,7 @@ export function Gravar() {
   const [etapa, setEtapa] = useState<Etapa>('gravar')
   const [audio, setAudio] = useState<Blob | null>(null) // guardado para reenviar sem regravar
   const [rascunho, setRascunho] = useState<Rascunho | null>(null)
+  const [comando, setComando] = useState<ComandoApartamento | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const equipe = useEquipe()
@@ -36,10 +40,14 @@ export function Gravar() {
     setErro(null)
     setAudio(blob)
     setEtapa('processando')
+    // a lista de prédios vem junto com o áudio: é ela que diz se a fala é sobre uma unidade
+    const predios = listarPredios().catch(() => [])
     try {
       const r = await processarAudio(blob)
       setRascunho({ ...r, responsavel: detectarResponsavel(r.transcricao, equipe) })
-      setEtapa('confirmar')
+      const cmd = interpretarComando(r.transcricao, await predios)
+      setComando(cmd)
+      setEtapa(cmd ? 'apartamento' : 'confirmar')
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro ao processar o áudio')
       setEtapa('gravar')
@@ -61,14 +69,15 @@ export function Gravar() {
   function recomecar() {
     setAudio(null)
     setRascunho(null)
+    setComando(null)
     setErro(null)
     setEtapa('gravar')
   }
 
   return (
     <section>
-      <h2>Gravar compromisso</h2>
-      <p className="sub">Diga o quê, quando e com quanta antecedência quer ser avisado.</p>
+      <h2>Gravar</h2>
+      <p className="sub">Um compromisso (o quê, quando e com quanta antecedência avisar) ou o status de um apartamento.</p>
 
       {erro && (
         <div className="erro-box" role="alert">
@@ -103,6 +112,15 @@ export function Gravar() {
           </div>
           <p>Entendendo o que você disse…</p>
         </div>
+      )}
+
+      {etapa === 'apartamento' && comando && (
+        <ComandoApartamentoResultado
+          comando={comando}
+          transcricao={rascunho?.transcricao ?? null}
+          onEraCompromisso={() => setEtapa('confirmar')}
+          onGravarOutro={recomecar}
+        />
       )}
 
       {etapa === 'confirmar' && rascunho && (

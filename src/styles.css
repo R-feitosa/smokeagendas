@@ -270,3 +270,16 @@ h3 { font-size: 1rem; margin-top: 20px; }
 .login__cartao h1 { font-size: 1.25rem; margin: 0; }
 .login__cartao .sub { margin: -6px 0 4px; }
 .login > .aviso { max-width: 360px; }
+
+/* gravar: resultado do comando de voz da aba Apartamentos */
+.comando { display: flex; flex-direction: column; gap: 12px; }
+.comando__titulo { margin: 4px 0 0; }
+.comando__lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.comando__item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 12px; background: #fff; border: 1px solid var(--borda); border-radius: 12px; }
+.comando__item--erro, .comando__item--nao-existe { border-color: #fecaca; background: #fef2f2; }
+.comando__opcoes { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.comando__opcoes .btn { padding: 8px 12px; }
+.comando__acoes { display: flex; gap: 10px; }
+.comando__acoes .btn { flex: 1; text-align: center; text-decoration: none; }
+.comando .aptos__marca--vago { background: #f2a21e; }
+.comando .aptos__marca--ocupado { background: #3350b0; }
