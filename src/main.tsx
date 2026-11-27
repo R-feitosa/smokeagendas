@@ -6,6 +6,7 @@ import App from './App'
 import '@fontsource/cinzel/400.css'
 import '@fontsource/cinzel/600.css'
 import './styles.css'
+import './liquid-glass.css' // TESTE: visual Liquid Glass (branch claude/liquid-glass-teste)
 
 // Atualização do app instalado: procura versão nova ao abrir, ao voltar para a tela e a
 // cada 15 min. A versão nova assume na hora (skipWaiting no sw.ts) e, com registerType
