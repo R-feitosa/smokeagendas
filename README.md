@@ -61,7 +61,7 @@ compartilháveis têm prefixo próprio:
 | Job do pg_cron | `agenda-enviar-lembretes` |
 | Vault | `agenda_cron_secret` (gerado no banco), `agenda_project_url` |
 | Secrets das funções | `AGENDA_GROQ_API_KEY` (ou `AGENDA_OPENAI_API_KEY`), `AGENDA_VAPID_PUBLIC_KEY`, `AGENDA_VAPID_PRIVATE_KEY`, `AGENDA_VAPID_SUBJECT`, `AGENDA_ALLOWED_ORIGINS` |
-| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_os` |
+| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_os`, `agenda_0005_os_equipe` |
 | Storage (OS) | bucket privado `agenda-os-fotos` (policies com prefixo `agenda_os_fotos`) |
 
 **Único ponto compartilhado: o login.** Os usuários ficam no Authentication do rf-ops,
@@ -127,7 +127,24 @@ Abrir OS → anexar fotos de **antes** (e durante) → executar → fotos de **d
 
 Na lista: indicadores (em aberto, atrasadas, concluídas no mês, % no prazo, tempo médio), filtros, busca e **exportação CSV** (abre no Excel).
 
-**Aplicar no rf-ops:** rodar `supabase/migrations/0004_os.sql` no SQL Editor (nome `agenda_0004_os`). Ele cria o bucket e as policies do Storage.
+### Equipe, checklist, assinatura e PDF (`0005_os_equipe_checklist_assinatura.sql`)
+
+| Recurso | Regra |
+|---|---|
+| **Equipes** (`os_equipes`, `os_membros`) | **Gestor** vê/edita todas as OS da equipe, atribui técnico, cancela e gere membros (tela *OS → 👥 Equipe*). **Técnico** vê as OS atribuídas a ele e as que abriu; removido da equipe, perde o acesso às atribuídas. Sem equipe, o uso continua individual. |
+| **Checklist por categoria** (`os_checklist_modelos`) | Escolher a categoria do equipamento carrega o checklist (OK / Não OK / N/A + observação; itens podem ser incluídos/removidos). **Concluir exige todos os itens respondidos.** Modelos iniciais são sugestões: ajuste pelo SQL Editor. |
+| **Assinatura do cliente** | Com o dedo na tela + nome de quem assinou; PNG no bucket, `assinado_em` carimbado pelo servidor; opcional; travada após concluir. |
+| **PDF da OS** | Gerado no aparelho (jsPDF, carregado sob demanda): dados, checklist, fotos **antes × depois lado a lado**, durante, assinatura e histórico. No celular abre o compartilhar (WhatsApp/e-mail). |
+| **Histórico** | Agora com o nome de quem fez, atribuições e assinatura. |
+
+**Aplicar no rf-ops (SQL Editor), nesta ordem:**
+1. `supabase/migrations/0004_os.sql` (nome `agenda_0004_os`) — cria tabelas, bucket e policies do Storage.
+2. `supabase/migrations/0005_os_equipe_checklist_assinatura.sql` (nome `agenda_0005_os_equipe`).
+3. Criar a equipe e o gestor (a pessoa precisa estar habilitada com `agenda.habilitar_usuario`):
+   ```sql
+   select agenda.os_criar_equipe('PHILCO Fortaleza', 'gestor@empresa.com.br');
+   ```
+   Os técnicos o próprio gestor inclui pelo app (ou: `select agenda.os_definir_membro('<equipe_id>', 'tecnico@empresa.com.br', 'tecnico');`).
 
 ## Backend: decisões e garantias
 

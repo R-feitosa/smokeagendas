@@ -1,6 +1,8 @@
 import { supabase } from './supabase'
 import { prepararImagem } from './imagem'
-import type { DadosOS, FotoOS, HistoricoOS, MomentoFoto, OrdemServico, StatusOS } from './types'
+import type {
+  DadosOS, Equipe, FotoOS, HistoricoOS, ItemChecklist, ModeloChecklist, MomentoFoto, OrdemServico, PapelEquipe, StatusOS,
+} from './types'
 
 export const BUCKET_FOTOS = 'agenda-os-fotos'
 
@@ -30,7 +32,10 @@ function erroLegivel(e: { message?: string } | null, padrao: string): Error {
   const msg = e?.message ?? ''
   if (/os_concluida_tem_servico/.test(msg)) return new Error('Descreva o serviço executado antes de concluir')
   if (/os_cancelada_tem_motivo/.test(msg)) return new Error('Informe o motivo do cancelamento')
-  if (/^(Para concluir|OS |Uma OS|Número|Só a legenda|A foto)/.test(msg)) return new Error(msg)
+  if (/os_checklist_valido/.test(msg)) return new Error('Checklist inválido')
+  if (/os_assinatura_coerente/.test(msg)) return new Error('Informe o nome de quem assinou')
+  if (/^(Para concluir|OS |Uma OS|Número|Só |A foto|A equipe|Você não|Sem equipe|O técnico|Pessoa não|Checklist)/.test(msg))
+    return new Error(msg)
   return new Error(padrao)
 }
 
@@ -50,7 +55,7 @@ export async function obterOS(id: string): Promise<OrdemServico> {
   return data as OrdemServico
 }
 
-export async function criarOS(dados: DadosOS): Promise<OrdemServico> {
+export async function criarOS(dados: DadosOS & { checklist?: ItemChecklist[] }): Promise<OrdemServico> {
   const { data, error } = await supabase.from('os_ordens').insert(dados).select('*').single()
   if (error) throw erroLegivel(error, 'Não foi possível abrir a OS')
   return data as OrdemServico
@@ -148,11 +153,97 @@ export async function excluirFoto(foto: FotoOS): Promise<void> {
 export async function listarHistorico(osId: string): Promise<HistoricoOS[]> {
   const { data, error } = await supabase
     .from('os_historico')
-    .select('id, quando, acao, de, para, detalhe')
+    .select('id, quando, acao, de, para, detalhe, autor_nome')
     .eq('os_id', osId)
     .order('quando')
   if (error) throw erroLegivel(error, 'Não foi possível carregar o histórico')
   return data as HistoricoOS[]
+}
+
+// ---------------------------------------------------------------
+// Equipes
+// ---------------------------------------------------------------
+
+/** Equipes de quem está logado, com membros e nomes (vazio = uso individual). */
+export async function minhasEquipes(): Promise<Equipe[]> {
+  const { data, error } = await supabase.rpc('os_minhas_equipes')
+  if (error) throw erroLegivel(error, 'Não foi possível carregar as equipes')
+  const porId = new Map<string, Equipe>()
+  for (const l of (data ?? []) as {
+    equipe_id: string; equipe_nome: string; meu_papel: PapelEquipe; user_id: string; nome: string | null; papel: PapelEquipe
+  }[]) {
+    const e = porId.get(l.equipe_id) ?? { id: l.equipe_id, nome: l.equipe_nome, meu_papel: l.meu_papel, membros: [] }
+    e.membros.push({ user_id: l.user_id, nome: l.nome, papel: l.papel })
+    porId.set(l.equipe_id, e)
+  }
+  return [...porId.values()]
+}
+
+export async function definirMembro(equipeId: string, email: string, papel: PapelEquipe): Promise<void> {
+  const { error } = await supabase.rpc('os_definir_membro', { p_equipe: equipeId, p_email: email.trim(), p_papel: papel })
+  if (error) throw erroLegivel(error, 'Não foi possível incluir na equipe')
+}
+
+export async function removerMembro(equipeId: string, userId: string): Promise<void> {
+  const { error } = await supabase.rpc('os_remover_membro', { p_equipe: equipeId, p_user: userId })
+  if (error) throw erroLegivel(error, 'Não foi possível remover da equipe')
+}
+
+/** Nome de qualquer pessoa das minhas equipes (para mostrar o técnico). */
+export function nomeMembro(equipes: Equipe[], userId: string | null): string | null {
+  if (!userId) return null
+  for (const e of equipes) for (const m of e.membros) if (m.user_id === userId) return m.nome
+  return null
+}
+
+// ---------------------------------------------------------------
+// Checklist
+// ---------------------------------------------------------------
+
+export async function modelosChecklist(): Promise<ModeloChecklist[]> {
+  const { data, error } = await supabase.from('os_checklist_modelos').select('*').order('ordem')
+  if (error) throw erroLegivel(error, 'Não foi possível carregar os checklists')
+  return data as ModeloChecklist[]
+}
+
+export function checklistDoModelo(m: ModeloChecklist | undefined): ItemChecklist[] {
+  return (m?.itens ?? []).map((item) => ({ item, resposta: null }))
+}
+
+export async function salvarChecklist(osId: string, checklist: ItemChecklist[]): Promise<OrdemServico> {
+  const { data, error } = await supabase.from('os_ordens').update({ checklist }).eq('id', osId).select('*').single()
+  if (error) throw erroLegivel(error, 'Não foi possível salvar o checklist')
+  return data as OrdemServico
+}
+
+export const checklistPendentes = (c: ItemChecklist[]) => c.filter((i) => !i.resposta).length
+
+// ---------------------------------------------------------------
+// Assinatura do cliente (PNG no mesmo bucket, pasta "assinatura")
+// ---------------------------------------------------------------
+
+export async function salvarAssinatura(os: OrdemServico, png: Blob, nome: string): Promise<OrdemServico> {
+  const caminho = `${os.user_id}/${os.id}/assinatura/${crypto.randomUUID()}.png`
+  const { error: errUp } = await supabase.storage.from(BUCKET_FOTOS).upload(caminho, png, { contentType: 'image/png' })
+  if (errUp) throw new Error('Falha ao enviar a assinatura. Verifique a conexão.')
+  const { data, error } = await supabase
+    .from('os_ordens')
+    .update({ assinatura_caminho: caminho, assinatura_nome: nome.trim() })
+    .eq('id', os.id)
+    .select('*')
+    .single()
+  if (error) {
+    await supabase.storage.from(BUCKET_FOTOS).remove([caminho])
+    throw erroLegivel(error, 'Não foi possível registrar a assinatura')
+  }
+  if (os.assinatura_caminho) await supabase.storage.from(BUCKET_FOTOS).remove([os.assinatura_caminho])
+  return data as OrdemServico
+}
+
+export async function urlAssinada(caminho: string | null): Promise<string | null> {
+  if (!caminho) return null
+  const { data } = await supabase.storage.from(BUCKET_FOTOS).createSignedUrl(caminho, 3600)
+  return data?.signedUrl ?? null
 }
 
 // ---------------------------------------------------------------
@@ -189,18 +280,23 @@ export function calcularIndicadores(lista: OrdemServico[], agora = new Date()): 
 }
 
 /** CSV com ";" e BOM (abre certo no Excel em PT-BR). */
-export function exportarCsv(lista: OrdemServico[]): void {
+export function exportarCsv(lista: OrdemServico[], equipes: Equipe[] = []): void {
   const dt = (iso: string | null) => (iso ? new Date(iso).toLocaleString('pt-BR') : '')
   const cab = [
     'Número', 'Status', 'Cliente', 'Unidade', 'Tipo', 'Prioridade', 'Equipamento', 'Marca', 'Modelo',
     'Nº série', 'Patrimônio', 'Solicitante', 'Técnico', 'Problema', 'Serviço executado', 'Peças',
     'Valor', 'Aberta em', 'Prazo', 'Iniciada em', 'Concluída em', 'Atrasada',
+    'Equipe', 'Categoria', 'Checklist (itens não OK)', 'Assinado por', 'Assinado em',
   ]
   const linhas = lista.map((o) => [
     o.numero, ROTULO_STATUS[o.status], o.cliente, o.unidade, ROTULO_TIPO[o.tipo], ROTULO_PRIORIDADE[o.prioridade],
-    o.equipamento, o.marca, o.modelo, o.numero_serie, o.patrimonio, o.solicitante, o.tecnico, o.problema,
+    o.equipamento, o.marca, o.modelo, o.numero_serie, o.patrimonio, o.solicitante,
+    (o.equipe_id ? nomeMembro(equipes, o.tecnico_id) ?? (o.tecnico_id ? o.tecnico : null) : o.tecnico), o.problema,
     o.servico_executado, o.pecas, o.valor != null ? String(o.valor).replace('.', ',') : '',
     dt(o.aberta_em), dt(o.prazo), dt(o.iniciada_em), dt(o.concluida_em), estaAtrasada(o) ? 'Sim' : 'Não',
+    equipes.find((e) => e.id === o.equipe_id)?.nome ?? '', o.categoria,
+    (o.checklist ?? []).filter((i) => i.resposta === 'nao_ok').map((i) => i.item).join(' | '),
+    o.assinatura_nome, dt(o.assinado_em),
   ])
   const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`
   const csv = '﻿' + [cab, ...linhas].map((l) => l.map(esc).join(';')).join('\r\n')
@@ -210,4 +306,19 @@ export function exportarCsv(lista: OrdemServico[]): void {
   a.download = `ordens-de-servico-${new Date().toISOString().slice(0, 10)}.csv`
   a.click()
   URL.revokeObjectURL(url)
+}
+
+export function descreverHistorico(h: HistoricoOS): string {
+  const st = (s: string | null) => (s && s in ROTULO_STATUS ? ROTULO_STATUS[s as keyof typeof ROTULO_STATUS] : s ?? '')
+  const mo = (s: string | null) => ({ antes: 'antes', durante: 'durante', depois: 'depois' } as Record<string, string>)[s ?? ''] ?? s ?? ''
+  switch (h.acao) {
+    case 'abertura': return `OS aberta (${h.detalhe})`
+    case 'status': return `Status: ${st(h.de)} → ${st(h.para)}${h.detalhe ? ` — ${h.detalhe}` : ''}`
+    case 'foto_incluida': return `Foto de ${mo(h.para)} incluída${h.detalhe ? ` — ${h.detalhe}` : ''}`
+    case 'foto_removida': return `Foto de ${mo(h.de)} removida${h.detalhe ? ` — ${h.detalhe}` : ''}`
+    case 'atribuicao': return h.para ? `Atribuída a ${h.para}${h.de ? ` (antes: ${h.de})` : ''}` : 'Técnico removido'
+    case 'assinatura': return `Assinatura do cliente colhida — ${h.detalhe ?? ''}`
+    case 'assinatura_removida': return 'Assinatura do cliente removida'
+    case 'edicao': return 'Dados editados'
+  }
 }

@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { deInput, paraInput } from '../lib/datas'
 import { ROTULO_PRIORIDADE, ROTULO_TIPO } from '../lib/os'
-import type { DadosOS, OrdemServico, PrioridadeOS, TipoOS } from '../lib/types'
+import type { DadosOS, Equipe, ModeloChecklist, OrdemServico, PrioridadeOS, TipoOS } from '../lib/types'
 
 type Props = {
   inicial?: OrdemServico
+  equipes: Equipe[]
+  modelos: ModeloChecklist[]
+  meuId: string
   bloqueado?: boolean
   salvando: boolean
   textoBotao: string
@@ -15,7 +18,7 @@ type Props = {
 const vazio = (v: string) => (v.trim() ? v.trim() : null)
 
 /** Formulário da OS (abrir e editar). Número, datas e status são do servidor. */
-export function OsForm({ inicial, bloqueado = false, salvando, textoBotao, onSalvar, onCancelar }: Props) {
+export function OsForm({ inicial, equipes, modelos, meuId, bloqueado = false, salvando, textoBotao, onSalvar, onCancelar }: Props) {
   const [f, setF] = useState({
     cliente: inicial?.cliente ?? 'PHILCO',
     unidade: inicial?.unidade ?? '',
@@ -36,9 +39,18 @@ export function OsForm({ inicial, bloqueado = false, salvando, textoBotao, onSal
     observacoes: inicial?.observacoes ?? '',
     valor: inicial?.valor != null ? String(inicial.valor).replace('.', ',') : '',
     prazo: inicial?.prazo ? paraInput(inicial.prazo) : '',
+    equipe_id: inicial ? inicial.equipe_id ?? '' : equipes[0]?.id ?? '',
+    tecnico_id: inicial ? inicial.tecnico_id ?? '' : equipes[0]?.meu_papel === 'tecnico' ? meuId : '',
+    categoria: inicial?.categoria ?? '',
   })
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value })
   const editando = !!inicial
+  const equipe = equipes.find((e) => e.id === f.equipe_id)
+  // atribuir/trocar equipe: quem abriu a OS ou o gestor da equipe atual (o banco confere de novo)
+  const podeAtribuir =
+    !inicial || inicial.user_id === meuId ||
+    (!!inicial.equipe_id && equipes.find((e) => e.id === inicial.equipe_id)?.meu_papel === 'gestor')
+  const tecnicos = equipe ? equipe.membros : []
 
   return (
     <form
@@ -51,7 +63,10 @@ export function OsForm({ inicial, bloqueado = false, salvando, textoBotao, onSal
           unidade: vazio(f.unidade),
           solicitante: vazio(f.solicitante),
           contato: vazio(f.contato),
-          tecnico: vazio(f.tecnico),
+          // com equipe o técnico é o membro escolhido (texto só espelha o nome); sem equipe, texto livre
+          tecnico: f.equipe_id
+            ? (f.tecnico_id ? tecnicos.find((m) => m.user_id === f.tecnico_id)?.nome ?? null : null)
+            : vazio(f.tecnico),
           tipo: f.tipo,
           prioridade: f.prioridade,
           equipamento: vazio(f.equipamento),
@@ -66,6 +81,9 @@ export function OsForm({ inicial, bloqueado = false, salvando, textoBotao, onSal
           observacoes: vazio(f.observacoes),
           valor: valor != null && Number.isFinite(valor) ? valor : null,
           prazo: f.prazo ? deInput(f.prazo) : null,
+          equipe_id: f.equipe_id || null,
+          tecnico_id: f.tecnico_id || null,
+          categoria: f.categoria || null,
         })
       }}
     >
@@ -113,14 +131,52 @@ export function OsForm({ inicial, bloqueado = false, salvando, textoBotao, onSal
             <input type="datetime-local" value={f.prazo} onChange={set('prazo')} />
           </label>
         </div>
-        <label>
-          Técnico responsável
-          <input value={f.tecnico} onChange={set('tecnico')} maxLength={120} />
-        </label>
+        {equipes.length > 0 ? (
+          <div className="form__linha">
+            <label>
+              Equipe
+              <select
+                value={f.equipe_id}
+                disabled={!podeAtribuir}
+                onChange={(e) => setF({ ...f, equipe_id: e.target.value, tecnico_id: '' })}
+              >
+                <option value="">Sem equipe (só eu)</option>
+                {equipes.map((e) => (
+                  <option key={e.id} value={e.id}>{e.nome}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Técnico
+              <select value={f.tecnico_id} onChange={set('tecnico_id')} disabled={!podeAtribuir}>
+                <option value="">{equipe ? 'A definir' : 'Eu mesmo'}</option>
+                {tecnicos.map((m) => (
+                  <option key={m.user_id} value={m.user_id}>
+                    {m.nome ?? 'Sem nome'}{m.papel === 'gestor' ? ' (gestor)' : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : (
+          <label>
+            Técnico responsável
+            <input value={f.tecnico} onChange={set('tecnico')} maxLength={120} />
+          </label>
+        )}
       </fieldset>
 
       <fieldset disabled={bloqueado || salvando} className="form__grupo">
         <legend>Equipamento</legend>
+        <label>
+          Categoria <small>(define o checklist)</small>
+          <select value={f.categoria} onChange={set('categoria')}>
+            <option value="">Sem checklist</option>
+            {modelos.map((m) => (
+              <option key={m.categoria} value={m.categoria}>{m.categoria}</option>
+            ))}
+          </select>
+        </label>
         <label>
           Equipamento
           <input value={f.equipamento} onChange={set('equipamento')} placeholder='Ex.: TV 50", Ar-condicionado 12.000 BTUs' maxLength={160} />

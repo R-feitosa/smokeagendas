@@ -79,7 +79,22 @@ export type OrdemServico = {
   cancelada_em: string | null
   motivo_cancelamento: string | null
   atualizada_em: string
+  equipe_id: string | null
+  tecnico_id: string | null
+  categoria: string | null
+  checklist: ItemChecklist[]
+  assinatura_caminho: string | null
+  assinatura_nome: string | null
+  assinado_em: string | null
 }
+
+export type RespostaChecklist = 'ok' | 'nao_ok' | 'na' | null
+export type ItemChecklist = { item: string; resposta: RespostaChecklist; obs?: string }
+export type ModeloChecklist = { categoria: string; itens: string[]; ordem: number }
+
+export type PapelEquipe = 'gestor' | 'tecnico'
+export type Membro = { user_id: string; nome: string | null; papel: PapelEquipe }
+export type Equipe = { id: string; nome: string; meu_papel: PapelEquipe; membros: Membro[] }
 
 /** Campos que a pessoa preenche (o resto o servidor carimba) */
 export type DadosOS = Pick<
@@ -87,6 +102,7 @@ export type DadosOS = Pick<
   | 'cliente' | 'unidade' | 'solicitante' | 'contato' | 'tecnico' | 'tipo' | 'prioridade'
   | 'equipamento' | 'marca' | 'modelo' | 'numero_serie' | 'patrimonio' | 'problema'
   | 'diagnostico' | 'servico_executado' | 'pecas' | 'observacoes' | 'valor' | 'prazo'
+  | 'equipe_id' | 'tecnico_id' | 'categoria'
 >
 
 export type FotoOS = {
@@ -106,7 +122,8 @@ export type FotoOS = {
 export type HistoricoOS = {
   id: number
   quando: string
-  acao: 'abertura' | 'status' | 'foto_incluida' | 'foto_removida' | 'edicao'
+  acao: 'abertura' | 'status' | 'foto_incluida' | 'foto_removida' | 'edicao' | 'atribuicao' | 'assinatura' | 'assinatura_removida'
+  autor_nome: string | null
   de: string | null
   para: string | null
   detalhe: string | null

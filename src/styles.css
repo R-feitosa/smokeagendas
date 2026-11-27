@@ -68,7 +68,7 @@ h3 { font-size: 1rem; margin-top: 20px; text-transform: capitalize; }
 .login { max-width: 360px; margin: 0 auto; padding: 18vh 20px 20px; }
 
 /* ---------- Ordens de Serviço ---------- */
-.titulo-acao { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.titulo-acao { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .titulo-acao h2 { margin: 0; }
 .btn--peq { padding: 8px 12px; font-size: .85rem; text-decoration: none; display: inline-block; }
 .btn--bloco { width: 100%; margin-top: 16px; }
@@ -125,3 +125,38 @@ h3 { font-size: 1rem; margin-top: 20px; text-transform: capitalize; }
 .historico { list-style: none; margin: 0; padding: 0; font-size: .85rem; display: flex; flex-direction: column; gap: 6px; }
 .historico time { color: var(--suave); font-variant-numeric: tabular-nums; margin-right: 6px; }
 .secao { text-transform: none; }
+
+/* ---------- OS: equipe, checklist, assinatura ---------- */
+.titulo-acao__botoes { display: flex; gap: 6px; }
+.painel { background: #fff; border: 1px solid var(--borda); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-size: .82rem; }
+.painel summary { font-weight: 600; cursor: pointer; }
+.painel table { width: 100%; border-collapse: collapse; margin-top: 8px; font-variant-numeric: tabular-nums; }
+.painel th, .painel td { text-align: right; padding: 4px 3px; border-bottom: 1px solid var(--borda); }
+.painel th:first-child, .painel td:first-child { text-align: left; }
+.painel th { color: var(--suave); font-weight: 500; font-size: .72rem; }
+.painel tbody tr { cursor: pointer; }
+
+.checklist-os ol { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ck { position: relative; background: #fff; border: 1px solid var(--borda); border-left-width: 4px; border-radius: 12px; padding: 10px 36px 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.ck--ok { border-left-color: var(--ok); }
+.ck--nao_ok { border-left-color: var(--erro); }
+.ck--na { border-left-color: #9ca3af; }
+.ck--pendente { border-left-color: #f59e0b; }
+.ck__item { font-size: .92rem; }
+.ck__botoes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.ck__btn { font: inherit; font-size: .82rem; font-weight: 600; padding: 8px 4px; border-radius: 10px; border: 1px solid var(--borda); background: #fff; color: var(--suave); }
+.ck__btn--ok { background: #ecfdf5; border-color: var(--ok); color: var(--ok); }
+.ck__btn--nao_ok { background: #fef2f2; border-color: var(--erro); color: var(--erro); }
+.ck__btn--na { background: #f3f4f6; border-color: #9ca3af; color: var(--texto); }
+.ck__obs { font: inherit; font-size: .88rem; padding: 8px 10px; border: 1px solid var(--borda); border-radius: 10px; }
+.ck__remover { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; border: 0; background: none; color: var(--suave); }
+
+.assinatura { background: #fff; border: 1px solid var(--borda); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.assinatura img { width: 100%; max-height: 160px; object-fit: contain; border-bottom: 1px solid var(--borda); }
+.assinatura p { margin: 0; }
+.assinatura__quadro { width: 100%; height: 200px; background: #fff; border: 2px dashed var(--borda); border-radius: 12px; touch-action: none; }
+
+.lista-membros { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.lista-membros li { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: .92rem; }
+.lista-membros small { color: var(--suave); }
+.equipe { margin-bottom: 12px; }

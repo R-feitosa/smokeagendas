@@ -11,6 +11,9 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
+      // jsPDF traz extras opcionais (html2canvas, DOMPurify, canvg) que não usamos: não pré-baixar.
+      // O chunk do PDF (osPdf) continua no cache para gerar o relatório offline.
+      injectManifest: { globIgnores: ['**/html2canvas*', '**/purify*', '**/index.es-*'] },
       injectRegister: 'auto',
       manifest: {
         name: 'Agenda por Voz',
