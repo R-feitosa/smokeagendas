@@ -5,6 +5,9 @@ import { Ajustes } from './pages/Ajustes'
 import { Hoje } from './pages/Hoje'
 import { Login } from './pages/Login'
 import { Novo } from './pages/Novo'
+import { OsDetalhe } from './pages/os/OsDetalhe'
+import { OsLista } from './pages/os/OsLista'
+import { OsNova } from './pages/os/OsNova'
 import { Semana } from './pages/Semana'
 
 export default function App() {
@@ -19,6 +22,9 @@ export default function App() {
         <Route index element={<Hoje />} />
         <Route path="semana" element={<Semana />} />
         <Route path="novo" element={<Novo />} />
+        <Route path="os" element={<OsLista />} />
+        <Route path="os/nova" element={<OsNova />} />
+        <Route path="os/:id" element={<OsDetalhe />} />
         <Route path="ajustes" element={<Ajustes />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

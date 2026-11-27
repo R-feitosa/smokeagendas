@@ -61,7 +61,8 @@ compartilháveis têm prefixo próprio:
 | Job do pg_cron | `agenda-enviar-lembretes` |
 | Vault | `agenda_cron_secret` (gerado no banco), `agenda_project_url` |
 | Secrets das funções | `AGENDA_GROQ_API_KEY` (ou `AGENDA_OPENAI_API_KEY`), `AGENDA_VAPID_PUBLIC_KEY`, `AGENDA_VAPID_PRIVATE_KEY`, `AGENDA_VAPID_SUBJECT`, `AGENDA_ALLOWED_ORIGINS` |
-| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio` |
+| Histórico de migrations | `agenda_0001_init`, `agenda_0002_cron`, `agenda_0003_recorrencia_reenvio`, `agenda_0004_os` |
+| Storage (OS) | bucket privado `agenda-os-fotos` (policies com prefixo `agenda_os_fotos`) |
 
 **Único ponto compartilhado: o login.** Os usuários ficam no Authentication do rf-ops,
 mas estar lá **não dá acesso** à agenda. Só usa o app quem for habilitado:
@@ -109,6 +110,24 @@ delete from agenda.perfis where id = (select id from auth.users where email = 'f
 6. **Usuários** — criar em *Authentication → Users* (e-mail e senha) e **habilitar** com
    `agenda.habilitar_usuario(...)`.
 7. **Rodar**: `npm run dev` · **Publicar**: `npm run build` e suba a pasta `dist/` (Netlify/Vercel).
+
+## Ordens de Serviço (aba 🛠 OS)
+
+Abrir OS → anexar fotos de **antes** (e durante) → executar → fotos de **depois** → concluir.
+
+| Regra (garantida no banco, migration `0004_os.sql`) | Como |
+|---|---|
+| Número `OS-AAAA-NNNNN` sequencial por ano, gerado no servidor | `os_contador` + trigger |
+| Concluir exige ≥1 foto de antes, ≥1 de depois e o serviço executado descrito | trigger `os_validar` + check |
+| OS concluída/cancelada fica travada (sem editar, sem incluir/remover foto) | triggers + policy do Storage |
+| Reabrir só volta para "em andamento"; cancelar exige motivo e é definitivo; não há DELETE | trigger + grants |
+| Datas de abertura/início/conclusão carimbadas pelo servidor | triggers |
+| Histórico (auditoria) de abertura, status, fotos e edições — só leitura para o usuário | `os_historico` |
+| Fotos em bucket privado, caminho `<user_id>/<os_id>/<momento>/…`, URLs assinadas de 1h; reduzidas no aparelho (≤1600px JPEG) | `src/lib/os.ts`, `src/lib/imagem.ts` |
+
+Na lista: indicadores (em aberto, atrasadas, concluídas no mês, % no prazo, tempo médio), filtros, busca e **exportação CSV** (abre no Excel).
+
+**Aplicar no rf-ops:** rodar `supabase/migrations/0004_os.sql` no SQL Editor (nome `agenda_0004_os`). Ele cria o bucket e as policies do Storage.
 
 ## Backend: decisões e garantias
 

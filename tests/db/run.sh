@@ -12,6 +12,8 @@ for teste in tests/db/*_test.sql; do
      && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/migrations/0001_init.sql \
      && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f tests/db/_shim_0002.sql \
      && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/migrations/0003_recorrencia_reenvio.sql \
+     && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f tests/db/_shim_storage.sql \
+     && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f supabase/migrations/0004_os.sql \
      && psql -q -v ON_ERROR_STOP=1 -d "$DB" -f "$teste"; then :; else falhas=$((falhas + 1)); fi
   dropdb --if-exists "$DB"
 done

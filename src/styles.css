@@ -66,3 +66,62 @@ h3 { font-size: 1rem; margin-top: 20px; text-transform: capitalize; }
 
 /* login */
 .login { max-width: 360px; margin: 0 auto; padding: 18vh 20px 20px; }
+
+/* ---------- Ordens de Serviço ---------- */
+.titulo-acao { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.titulo-acao h2 { margin: 0; }
+.btn--peq { padding: 8px 12px; font-size: .85rem; text-decoration: none; display: inline-block; }
+.btn--bloco { width: 100%; margin-top: 16px; }
+.btn--ok { background: var(--ok); }
+.btn--perigo { background: #fff; color: var(--erro); border: 1px solid #fecaca; }
+.voltar { display: inline-block; color: var(--cor); text-decoration: none; margin-bottom: 8px; font-size: .9rem; }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.kpi { background: #fff; border: 1px solid var(--borda); border-radius: 12px; padding: 10px; font-size: .72rem; color: var(--suave); }
+.kpi span { display: block; font-size: 1.35rem; font-weight: 700; color: var(--texto); font-variant-numeric: tabular-nums; }
+.kpi--alerta span { color: var(--erro); }
+
+.busca { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid var(--borda); border-radius: 10px; margin-bottom: 10px; }
+.chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 10px; }
+.chip { flex: none; font: inherit; font-size: .82rem; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--borda); background: #fff; color: var(--suave); }
+.chip--on { background: var(--cor); border-color: var(--cor); color: #fff; }
+
+.card--link { color: inherit; text-decoration: none; }
+.card--atraso { border-color: #fecaca; background: #fef2f2; }
+.os__topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.os__topo h2 { margin: 0; }
+.os__datas { text-transform: none; }
+.status { flex: none; font-size: .72rem; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: var(--cor-clara); color: var(--cor); }
+.status--em_andamento { background: #eff6ff; color: #1d4ed8; }
+.status--aguardando_peca { background: #fffbeb; color: #b45309; }
+.status--concluida { background: #ecfdf5; color: var(--ok); }
+.status--cancelada { background: #f3f4f6; color: var(--suave); }
+
+.acoes-status { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.acoes-status .btn { flex: 1 1 140px; }
+.checklist { list-style: none; padding: 10px 12px; margin: 0 0 8px; background: #fff; border: 1px solid var(--borda); border-radius: 12px; font-size: .88rem; color: var(--suave); display: flex; flex-direction: column; gap: 4px; }
+.checklist .ok { color: var(--ok); }
+
+.fotos { display: flex; flex-direction: column; gap: 12px; }
+.fotos__grupo { background: #fff; border: 1px solid var(--borda); border-radius: 14px; padding: 12px; }
+.fotos__cab { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.fotos__grade { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.foto { display: flex; flex-direction: column; gap: 2px; font-size: .7rem; color: var(--suave); }
+.foto img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; display: block; background: #f3f4f6; }
+.foto__legenda { color: var(--texto); }
+.foto__acoes { display: flex; gap: 4px; }
+.foto__acoes button { flex: 1; border: 1px solid var(--borda); background: #fff; border-radius: 8px; padding: 4px; }
+.selo { display: inline-block; min-width: 22px; text-align: center; font-size: .72rem; padding: 1px 6px; border-radius: 999px; background: #f3f4f6; color: var(--suave); }
+.selo--ok { background: #ecfdf5; color: var(--ok); }
+.selo--falta { background: #fef2f2; color: var(--erro); }
+
+.form__grupo { border: 1px solid var(--borda); border-radius: 14px; padding: 12px; margin: 0; display: flex; flex-direction: column; gap: 12px; background: #fff; min-width: 0; }
+.form__grupo legend { font-weight: 600; padding: 0 6px; }
+.form__linha { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form__linha > label { min-width: 0; }
+.form input, .form select, .form textarea { width: 100%; }
+.form fieldset:disabled input, .form fieldset:disabled select, .form fieldset:disabled textarea { background: #f9fafb; color: var(--texto); }
+
+.historico { list-style: none; margin: 0; padding: 0; font-size: .85rem; display: flex; flex-direction: column; gap: 6px; }
+.historico time { color: var(--suave); font-variant-numeric: tabular-nums; margin-right: 6px; }
+.secao { text-transform: none; }

@@ -16,6 +16,9 @@ export function Layout() {
         <NavLink to="/novo" className="tabbar__novo">
           <span>🎙</span>Novo
         </NavLink>
+        <NavLink to="/os">
+          <span>🛠</span>OS
+        </NavLink>
         <NavLink to="/ajustes">
           <span>⚙️</span>Ajustes
         </NavLink>
